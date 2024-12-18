@@ -1,11 +1,13 @@
 import {RefObject, useEffect, useRef} from "react";
 import v2 from "../core/Math/v2.tsx";
 import v3 from "../core/Math/v3.tsx";
+import PropsWithChildren from "./ParameterTypes/PropsWithChildren.ts";
+import {createPortal} from "react-dom";
 
 function animate(canvasRef: RefObject<HTMLCanvasElement>) {
-    const circles: { position: v3, speedBoost: number }[] = [];
+    const triangles: { position: v3, speedBoost: number }[] = [];
     console.log(new v3(0,0,0).minus(new v3(0, 10,0)).z)
-    function drawCircles(
+    function drawTriangles(
         ctx: CanvasRenderingContext2D,
         count: number,
         width: number,
@@ -19,9 +21,9 @@ function animate(canvasRef: RefObject<HTMLCanvasElement>) {
         const zRange = 20;
         const minZ = 4;
         const maxSpeedBoost = 2.4;
-        if (circles.length <= 0) {
+        if (triangles.length <= 0) {
             for ( let i = 0; i < count; ++i) {
-                circles.push({
+                triangles.push({
                     position: new v3(
                         Math.random() * width,
                         Math.random() * height,
@@ -29,17 +31,17 @@ function animate(canvasRef: RefObject<HTMLCanvasElement>) {
                     ),
                     speedBoost: 1 + Math.random() * maxSpeedBoost
                 });
-                circles.sort(
+                triangles.sort(
                     (a, b) => b.position.z - a.position.z
                 );
             }
         }
-        for ( const circle of circles ) {
+        for ( const triangle of triangles ) {
             ctx.beginPath();
-            const center = circle.position
+            const center = triangle.position
                 .cutToV2()
-                .plus(new v2(0, (shift/circle.position.z)*circle.speedBoost));
-            const arrowTop = new v2(0, -(maxSize / (circle.position.z/zRange)));
+                .plus(new v2(0, (shift/triangle.position.z)*triangle.speedBoost));
+            const arrowTop = new v2(0, -(maxSize / (triangle.position.z/zRange)));
             center.y = center.y % (height + 2*arrowTop.length()) - arrowTop.length();
             const top = center.plus(arrowTop);
             const rightCorner = center.plus(arrowTop.rotateBy(Math.PI * 2 / 3));
@@ -49,7 +51,11 @@ function animate(canvasRef: RefObject<HTMLCanvasElement>) {
             ctx.lineTo(leftCorner.x, leftCorner.y);
             ctx.lineTo(top.x, top.y);
             const p = 1 + Math.cos((shift / 1000));
-            ctx.fillStyle = `rgba(${(1-(circle.position.z/zRange))**p * 255} ${(1-(circle.position.z/zRange))**(1+p) * 255} ${(1-(circle.position.z/zRange))**2 * 255} / 255)`
+            const redColorStrength = (1-(triangle.position.z/zRange))**p * 255;
+            const blueColorStrength = (1-(triangle.position.z/zRange))**(1+p) * 255;
+            const greenColorStrength = (1-(triangle.position.z/zRange))**2 * 255;
+
+            ctx.fillStyle = `rgba(${redColorStrength} ${blueColorStrength} ${greenColorStrength} / 255)`
             ctx.fill();
         }
     }
@@ -64,7 +70,7 @@ function animate(canvasRef: RefObject<HTMLCanvasElement>) {
         ctx.rect(0, 0, canvasRef.current.width, canvasRef.current.height);
         ctx.fillStyle = 'rgba(0 0 0 / 255)'
         ctx.fill()
-        drawCircles(
+        drawTriangles(
             ctx,
             350,
             canvasRef.current.width,
@@ -83,4 +89,5 @@ export default function SplashScreenAnimation() {
         animate(canvasRef);
     }, [])
     return <canvas ref={canvasRef} className={"w-full h-full"}></canvas>
+
 }
