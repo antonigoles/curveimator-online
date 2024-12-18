@@ -10,10 +10,10 @@ export function Home(): JSX.Element {
                         <p className={"font-bold text-6xl"}>Curveimator CC</p>
                     </div>
                     <div className={"w-full mt-20 p-4"}>
-                        <p className={"text-3xl p-4 hover:cursor-pointer hover:bg-slate-500 rounded-2xl px-7"}>
+                        <p className={"text-lg p-2 hover:cursor-pointer hover:bg-slate-500 rounded-2xl px-4"}>
                             Stwórz nowy projekt
                         </p>
-                        <p className={"text-3xl p-4 opacity-45 rounded-2xl px-7"}>
+                        <p className={"text-lg p-2 opacity-45 rounded-2xl px-4"}>
                             Otwórz projekt
                         </p>
                     </div>
