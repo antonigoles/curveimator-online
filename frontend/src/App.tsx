@@ -1,11 +1,7 @@
 import {useEffect, useState} from "react";
 import {Home} from "./views/Home.tsx";
 import {Editor} from "./views/Editor.tsx";
-
-enum Views {
-    Home = 1,
-    Editor
-}
+import {RouteContext, ViewDataType, Views} from "./contexts/RouterContext.tsx";
 
 function viewByRoute(route: Views): JSX.Element
 {
@@ -26,10 +22,23 @@ function evaluateRouteByURL(): Views
     return paths[window.location.pathname] ?? Views.Home;
 }
 
+
 export default function App() {
-    const [route, setRoute] = useState<Views>(Views.Home)
+    const [view, setView] = useState<Views>(Views.Home);
+    const [viewData, setViewData] = useState<ViewDataType>();
+
     useEffect(()=>{
-        setRoute(evaluateRouteByURL());
+        setView(evaluateRouteByURL());
     },[])
-    return viewByRoute(route);
+
+    function updateRoute(view: Views, viewData: ViewDataType): void {
+        setView(view);
+        setViewData(viewData);
+    }
+
+    return (
+        <RouteContext.Provider value={{view, viewData, updateRoute}}>
+            {viewByRoute(view)}
+        </RouteContext.Provider>
+    );
 }

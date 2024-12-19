@@ -1,7 +1,7 @@
 import InputParameters from "../ParameterTypes/InputParameters.ts";
 
 export default function TextInput({label, onInput, className, value}: InputParameters) {
-    let classes = "text-lg p-1 px-2 border-2 select-none focus:outline-none";
+    let classes = "text-sm p-1 px-2 border-1 select-none focus:outline-none";
     if (className) {
         classes += className;
     }

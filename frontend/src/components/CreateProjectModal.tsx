@@ -2,12 +2,23 @@ import ModalParameters from "./ParameterTypes/ModalParameters.ts";
 import {createPortal} from "react-dom";
 import Button from "./input/Button.tsx";
 import TextInput from "./input/TextInput.tsx";
-import {useEffect, useState} from "react";
+import {useContext, useEffect, useState} from "react";
 import {randomName} from "../core/UI/utils.ts";
+import {RouteContext, RouteContextData, Views} from "../contexts/RouterContext.tsx";
 
-function createProject(name: string): void {}
+function createProject(name: string, routerContext: RouteContextData): void {
+    routerContext.updateRoute(
+        Views.Editor,
+        {
+            isNewProject: true,
+            projectName: name
+        }
+    )
+}
 
 export default function CreateProjectModal({show, setShow}: ModalParameters): JSX.Element {
+    const routerContext = useContext<RouteContextData>(RouteContext);
+
     const [name, setName] = useState(randomName());
     function hide() { setShow(false) }
 
@@ -29,7 +40,7 @@ export default function CreateProjectModal({show, setShow}: ModalParameters): JS
                 </div>
                 <div className={"select-none w-full flex flex-row justify-between p-4"}>
                     <Button onInput={hide} label={"Anuluj"}></Button>
-                    <Button onInput={() => createProject(name)} label={"Stwórz"}></Button>
+                    <Button onInput={() => createProject(name, routerContext)} label={"Stwórz"}></Button>
                 </div>
             </div>
         </div>

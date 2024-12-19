@@ -5,4 +5,4 @@ const projectRepository = new ProjectRepository()
 const editorService = new EditorService(projectRepository);
 
 
-export default { editorService, projectRepository };
+export { editorService, projectRepository };

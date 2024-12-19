@@ -12,5 +12,7 @@ export default class ProjectRepository {
         // TODO: Implement
     }
 
-    saveProject(project: Project): Promise<void> {}
+    saveProject(project: Project): Promise<void> {
+
+    }
 }
