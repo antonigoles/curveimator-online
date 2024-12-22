@@ -1,0 +1,21 @@
+{
+  "tasks": {
+    "dev": "deno run --watch src/index.ts"
+  },
+  "imports": {
+    "@sequelize/postgres": "npm:@sequelize/postgres@^7.0.0-alpha.43",
+    "@std/assert": "jsr:@std/assert@1",
+    "@types/node": "npm:@types/node@^22.10.2",
+    "@types/validator": "npm:@types/validator@^13.12.2",
+    "express": "npm:express@4.18.2",
+    "reflect-metadata": "npm:reflect-metadata@^0.2.2",
+    "sequelize": "npm:sequelize@^6.37.5",
+    "sequelize-typescript": "npm:sequelize-typescript@^2.1.6",
+    "ts-dotenv": "npm:ts-dotenv@^0.9.1"
+  },
+  "compilerOptions": {
+    "checkJs": true,
+    "experimentalDecorators": true, // not necessary but lets leave it here
+    "emitDecoratorMetadata": true
+  }
+}

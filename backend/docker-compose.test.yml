@@ -1,0 +1,30 @@
+version: '3.8'
+services:
+    app-test:
+        build:
+            context: .
+            dockerfile: Dockerfile.test
+        ports:
+            - "3000:3001"
+        environment:
+            - PORT=3000
+            - POSTGRES_HOST=db
+            - POSTGRES_PORT=5433
+            - POSTGRES_USER=test_postgres
+            - POSTGRES_PASSWORD=test_postgres
+            - POSTGRES_DATABASE=test_curveimator
+        depends_on:
+            - db-test
+    db-test:
+        image: postgres:13-alpine
+        container_name: test_postgres_db
+        environment:
+            POSTGRES_USER: test_postgres
+            POSTGRES_PASSWORD: test_postgres
+            POSTGRES_DB: test_curveimator
+        ports:
+            - "5432:5433"
+        volumes:
+            - test_postgres_data:/var/lib/postgresql/test_data
+volumes:
+    test_postgres_data:
