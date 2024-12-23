@@ -1,4 +1,4 @@
-version: '3.8'
+name: curveimator
 services:
     app:
         build:
@@ -15,6 +15,11 @@ services:
             - POSTGRES_DATABASE=curveimator
         depends_on:
             - db
+    adminer:
+        image: adminer
+        restart: always
+        ports:
+            - 8080:8080
     db:
         image: postgres:13-alpine
         container_name: postgres_db

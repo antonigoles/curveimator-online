@@ -1,14 +1,29 @@
-import { Table, Column, Model, HasMany } from 'sequelize-typescript';
+import {
+    InferAttributes,
+    CreationOptional,
+    InferCreationAttributes,
+    Model,
+    DataTypes,
+    NonAttribute
+} from 'npm:@sequelize/core';
+import {
+    PrimaryKey,
+    AutoIncrement,
+    Attribute, Table,
+    HasMany
+} from '@sequelize/core/decorators-legacy';
 import ProjectObject from "./projectObject.model.ts";
 
 @Table
-export default class Project extends Model {
-    @Column({primaryKey: true})
-    declare id: number;
+export default class Project extends Model<InferAttributes<Project>, InferCreationAttributes<Project>> {
+    @Attribute(DataTypes.INTEGER)
+    @PrimaryKey
+    @AutoIncrement
+    declare id: CreationOptional<number>;
 
-    @Column
+    @Attribute(DataTypes.STRING)
     declare name: string;
 
-    @HasMany(() => ProjectObject)
-    declare objects: ProjectObject
+    @HasMany(() => ProjectObject, 'projectId')
+    declare objects?: NonAttribute<ProjectObject[]>;
 }

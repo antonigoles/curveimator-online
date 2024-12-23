@@ -1,12 +1,13 @@
-version: '3.8'
+name: curveimator-test
 services:
     app-test:
         build:
             context: .
-            dockerfile: Dockerfile.test
+            dockerfile: Dockerfile
         ports:
-            - "3000:3001"
+            - "3001:3000"
         environment:
+            - HOST=localhost
             - PORT=3000
             - POSTGRES_HOST=db
             - POSTGRES_PORT=5433
@@ -15,6 +16,11 @@ services:
             - POSTGRES_DATABASE=test_curveimator
         depends_on:
             - db-test
+    adminer:
+        image: adminer
+        restart: always
+        ports:
+            - 8080:8080
     db-test:
         image: postgres:13-alpine
         container_name: test_postgres_db
@@ -23,7 +29,7 @@ services:
             POSTGRES_PASSWORD: test_postgres
             POSTGRES_DB: test_curveimator
         ports:
-            - "5432:5433"
+            - "5433:5432"
         volumes:
             - test_postgres_data:/var/lib/postgresql/test_data
 volumes:

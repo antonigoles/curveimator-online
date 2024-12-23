@@ -1,20 +1,38 @@
-import { Table, Column, Model, BelongsTo } from 'sequelize-typescript';
+import {
+    InferAttributes,
+    CreationOptional,
+    InferCreationAttributes,
+    Model,
+    DataTypes,
+    NonAttribute
+} from 'npm:@sequelize/core';
+import {
+    PrimaryKey,
+    AutoIncrement,
+    Attribute,
+    Table,
+    BelongsTo,
+    NotNull
+} from '@sequelize/core/decorators-legacy';
 import ProjectObject from "./projectObject.model.ts";
 
 @Table
-export default class Keyframe extends Model {
-    @Column({primaryKey: true})
-    declare id: number;
+export default class Keyframe extends Model<InferAttributes<Keyframe>, InferCreationAttributes<Keyframe>> {
+    @Attribute(DataTypes.INTEGER)
+    @PrimaryKey
+    @AutoIncrement
+    declare id: CreationOptional<number>;
 
-    @Column
+    @Attribute(DataTypes.STRING)
     declare propertyPath: string;
 
-    @Column
+    @Attribute(DataTypes.FLOAT)
     declare time: number;
 
-    @Column
+    @Attribute(DataTypes.FLOAT)
     declare value: number;
 
-    @BelongsTo(() => ProjectObject)
-    declare project: ProjectObject;
+    @Attribute(DataTypes.INTEGER)
+    @NotNull
+    declare projectObjectId: number;
 }

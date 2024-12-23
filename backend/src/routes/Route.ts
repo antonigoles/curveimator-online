@@ -1,31 +1,29 @@
-import express from "express";
+import express from "npm:express";
+
+type RouteHandler = (req: express.Request, res: express.Response) => void
 
 export default class Route {
-    method: string;
+    method: "POST" | "GET";
     path: string;
-    handler: (req: express.Request, res: express.Response) => void;
+    handler: RouteHandler;
 
-    constructor(
-        method: string,
-        path: string,
-        handler: (req: express.Request, res: express.Response) => void
-    ) {
+    constructor(method: "POST" | "GET", path: string, handler: RouteHandler) {
         this.method = method;
         this.path = path;
-        this.handler = handler;
+        this.handler = function(req: express.Request, res: express.Response) {
+            try {
+                handler(req, res);
+            } catch (err: any) {
+                res.status(500).json({ "error": "Internal Error!", ...err})
+            }
+        };
     }
 
-    static POST(
-        path: string,
-        handler: (req: express.Request, res: express.Response) => void
-    ) {
+    static POST(path: string, handler: RouteHandler): Route {
         return new Route("POST", path, handler);
     }
 
-    static GET(
-        path: string,
-        handler: (req: express.Request, res: express.Response) => void
-    ) {
+    static GET(path: string, handler: RouteHandler): Route {
         return new Route("GET", path, handler);
     }
 }

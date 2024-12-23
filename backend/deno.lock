@@ -1,22 +1,32 @@
 {
   "version": "4",
   "specifiers": {
-    "jsr:@std/assert@*": "1.0.10",
     "jsr:@std/assert@1": "1.0.10",
+    "jsr:@std/assert@^1.0.10": "1.0.10",
+    "jsr:@std/expect@*": "1.0.10",
     "jsr:@std/internal@^1.0.5": "1.0.5",
+    "npm:@sequelize/core@*": "7.0.0-alpha.43",
+    "npm:@sequelize/core@^7.0.0-alpha.42": "7.0.0-alpha.43",
+    "npm:@sequelize/postgres@*": "7.0.0-alpha.43",
     "npm:@sequelize/postgres@^7.0.0-alpha.43": "7.0.0-alpha.43",
     "npm:@types/node@^22.10.2": "22.10.2",
     "npm:@types/validator@^13.12.2": "13.12.2",
+    "npm:express@*": "4.18.2",
     "npm:express@4.18.2": "4.18.2",
     "npm:reflect-metadata@~0.2.2": "0.2.2",
-    "npm:sequelize-typescript@^2.1.6": "2.1.6_@types+node@22.5.4_@types+validator@13.12.2_reflect-metadata@0.2.2_sequelize@6.37.5",
-    "npm:sequelize@^6.37.5": "6.37.5",
     "npm:ts-dotenv@~0.9.1": "0.9.1"
   },
   "jsr": {
     "@std/assert@1.0.10": {
       "integrity": "59b5cbac5bd55459a19045d95cc7c2ff787b4f8527c0dd195078ff6f9481fbb3",
       "dependencies": [
+        "jsr:@std/internal"
+      ]
+    },
+    "@std/expect@1.0.10": {
+      "integrity": "7659b640447887cd1735f866962e10e434f12443b13595b149970c806e6f08db",
+      "dependencies": [
+        "jsr:@std/assert@^1.0.10",
         "jsr:@std/internal"
       ]
     },
@@ -54,14 +64,14 @@
         "debug@4.4.0",
         "dottie",
         "fast-glob",
-        "inflection@3.0.0",
+        "inflection",
         "lodash",
         "retry-as-promised",
         "semver",
-        "sequelize-pool@8.0.0",
+        "sequelize-pool",
         "toposort-class",
         "type-fest",
-        "uuid@10.0.0",
+        "uuid",
         "validator"
       ]
     },
@@ -135,9 +145,6 @@
     "array-flatten@1.1.1": {
       "integrity": "sha512-PCVAQswWemu6UdxsDFFX/+gVeYqKAod3D3UVm91jHwynguOwAvYPhx8nNlM++NqRcK6CxxpUafjmhIdKiHibqg=="
     },
-    "balanced-match@1.0.2": {
-      "integrity": "sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw=="
-    },
     "bnf-parser@3.1.6": {
       "integrity": "sha512-3x0ECh6CghmcAYnY6uiVAOfl263XkWffDq5fQS20ac3k0U7TE5rTWNXTnOTckgmfZc94iharwqCyoV8OAYxYoA=="
     },
@@ -156,13 +163,6 @@
         "raw-body",
         "type-is",
         "unpipe"
-      ]
-    },
-    "brace-expansion@1.1.11": {
-      "integrity": "sha512-iCuPHDFgrHX7H2vEI/5xpz07zSHB00TpugqhmYtVmMO6518mCuRMoOYFldEBl0g187ufozdaHgWKcYFb61qGiA==",
-      "dependencies": [
-        "balanced-match",
-        "concat-map"
       ]
     },
     "braces@3.0.3": {
@@ -187,9 +187,6 @@
         "call-bind-apply-helpers",
         "get-intrinsic"
       ]
-    },
-    "concat-map@0.0.1": {
-      "integrity": "sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg=="
     },
     "content-disposition@0.5.4": {
       "integrity": "sha512-FveZTNuGw04cxlAiWbzi6zTAL/lhehaWbTtgluJh4/E95DqMwTmha3KZN1aAWA8cFIhHzMZUvLevkw5Rqk+tSQ==",
@@ -338,9 +335,6 @@
     "fresh@0.5.2": {
       "integrity": "sha512-zJ2mQYM18rEFOudeV4GShTGIQ7RbzA7ozbU9I/XBpm7kqgMywgmylMwXHxZJmkVoYkna9d2pVXVXPdYTP9ej8Q=="
     },
-    "fs.realpath@1.0.0": {
-      "integrity": "sha512-OO0pH2lK6a0hZnAdau5ItzHPI6pUlvI7jMVnxUQRtw4owF2wk8lOSabtGDCTP4Ggrg2MbGnWO9X8K1t4+fGMDw=="
-    },
     "function-bind@1.1.2": {
       "integrity": "sha512-7XHNxH7qX9xG5mIwxkhumTox/MIRNcOgDrxWsMt2pAr23WHp6MrRlN7FBSFpCpr+oVO0F744iUgR82nJMfG2SA=="
     },
@@ -363,17 +357,6 @@
       "integrity": "sha512-AOIgSQCepiJYwP3ARnGx+5VnTu2HBYdzbGP45eLw1vr3zB3vZLeyed1sC9hnbcOc9/SrMyM5RPQrkGz4aS9Zow==",
       "dependencies": [
         "is-glob"
-      ]
-    },
-    "glob@7.2.0": {
-      "integrity": "sha512-lmLf6gtyrPq8tTjSmrO94wBeQbFR3HbLHbuyD69wuyQkImp2hWqMGB47OX65FBkPffO641IP9jWa1z4ivqG26Q==",
-      "dependencies": [
-        "fs.realpath",
-        "inflight",
-        "inherits",
-        "minimatch",
-        "once",
-        "path-is-absolute"
       ]
     },
     "gopd@1.2.0": {
@@ -404,18 +387,8 @@
         "safer-buffer"
       ]
     },
-    "inflection@1.13.4": {
-      "integrity": "sha512-6I/HUDeYFfuNCVS3td055BaXBwKYuzw7K3ExVMStBowKo9oOAMJIXIHvdyR3iboTCp1b+1i5DSkIZTcwIktuDw=="
-    },
     "inflection@3.0.0": {
       "integrity": "sha512-1zEJU1l19SgJlmwqsEyFTbScw/tkMHFenUo//Y0i+XEP83gDFdMvPizAD/WGcE+l1ku12PcTVHQhO6g5E0UCMw=="
-    },
-    "inflight@1.0.6": {
-      "integrity": "sha512-k92I/b08q4wvFscXCLvqfsHCrjrF7yiXsQuIVvVE7N82W3+aqpzuUdBbfhWcy/FZR3/4IgflMgKLOsvPDrGCJA==",
-      "dependencies": [
-        "once",
-        "wrappy"
-      ]
     },
     "inherits@2.0.4": {
       "integrity": "sha512-k/vGaX4/Yla3WzyMCvTQOXYeIHvqOKtnqBduzTHpzpQZzAskKMhZ2K+EnBiSM9zGSoIFeMpXKxa4dYeZIQqewQ=="
@@ -472,21 +445,6 @@
     "mime@1.6.0": {
       "integrity": "sha512-x0Vn8spI+wuJ1O6S7gnbaQg8Pxh4NNHb7KSINmEWKiPE4RKOplvijn+NkmYmmRgP68mc70j2EbeTFRsrswaQeg=="
     },
-    "minimatch@3.1.2": {
-      "integrity": "sha512-J7p63hRiAjw1NDEww1W7i37+ByIrOWO5XQQAzZ3VOcL0PNybwpfmV/N05zFAzwQ9USyEcX6t3UO+K5aqBQOIHw==",
-      "dependencies": [
-        "brace-expansion"
-      ]
-    },
-    "moment-timezone@0.5.46": {
-      "integrity": "sha512-ZXm9b36esbe7OmdABqIWJuBBiLLwAjrN7CE+7sYdCCx82Nabt1wHDj8TVseS59QIlfFPbOoiBPm6ca9BioG4hw==",
-      "dependencies": [
-        "moment"
-      ]
-    },
-    "moment@2.30.1": {
-      "integrity": "sha512-uEmtNhbDOrWPFS+hdjFCBfy9f2YoyzRpwcl+DqpC6taX21FzsTLQVbMV/W7PzNSX6x/bhC1zA3c2UQ5NzH6how=="
-    },
     "ms@2.0.0": {
       "integrity": "sha512-Tpp60P6IUJDTuOq/5Z8cdskzJujfwqfOTkrwIwj7IRISpnkJnT6SyJ4PCPnGMoFjC9ddhal5KVIYtAt97ix05A=="
     },
@@ -508,17 +466,8 @@
         "ee-first"
       ]
     },
-    "once@1.4.0": {
-      "integrity": "sha512-lNaJgI+2Q5URQBkccEKHTQOPaXdUxnZZElQTZY0MFUAuaEqe1E+Nyvgdz/aIyNi6Z9MzO5dv1H8n58/GELp3+w==",
-      "dependencies": [
-        "wrappy"
-      ]
-    },
     "parseurl@1.3.3": {
       "integrity": "sha512-CiyeOxFT/JZyN5m0z9PfXw4SCBJ6Sygz1Dpl0wqjlhDEGGBP1GnsUVEL0p63hoG1fcj3fHynXi9NYO4nWOL+qQ=="
-    },
-    "path-is-absolute@1.0.1": {
-      "integrity": "sha512-AVbw3UJ2e9bq64vSaS9Am0fje1Pa8pbGqTTsmXfaIiMpnr5DlDhfJOuLj9Sf95ZPVDAUerDfEk88MPmPe7UCQg=="
     },
     "path-to-regexp@0.1.7": {
       "integrity": "sha512-5DFkuoqlv1uYQKxy8omFBeJPQcdoE07Kv2sferDCrAq1ohOU+MSDswDIbnx3YAM60qIOnYa53wBhXW0EbMonrQ=="
@@ -695,42 +644,8 @@
         "statuses"
       ]
     },
-    "sequelize-pool@7.1.0": {
-      "integrity": "sha512-G9c0qlIWQSK29pR/5U2JF5dDQeqqHRragoyahj/Nx4KOOQ3CPPfzxnfqFPCSB7x5UgjOgnZ61nSxz+fjDpRlJg=="
-    },
     "sequelize-pool@8.0.0": {
       "integrity": "sha512-xY04c5ctp6lKE4ZoSVo7YJHN5FHVhoYMoH2Z8jWIJG26c9kJSkIjql5HgD9XG5cwJbYMF0Ko2Fhgws20HC90Ug=="
-    },
-    "sequelize-typescript@2.1.6_@types+node@22.5.4_@types+validator@13.12.2_reflect-metadata@0.2.2_sequelize@6.37.5": {
-      "integrity": "sha512-Vc2N++3en346RsbGjL3h7tgAl2Y7V+2liYTAOZ8XL0KTw3ahFHsyAUzOwct51n+g70I1TOUDgs06Oh6+XGcFkQ==",
-      "dependencies": [
-        "@types/node@22.5.4",
-        "@types/validator",
-        "glob",
-        "reflect-metadata",
-        "sequelize"
-      ]
-    },
-    "sequelize@6.37.5": {
-      "integrity": "sha512-10WA4poUb3XWnUROThqL2Apq9C2NhyV1xHPMZuybNMCucDsbbFuKg51jhmyvvAUyUqCiimwTZamc3AHhMoBr2Q==",
-      "dependencies": [
-        "@types/debug",
-        "@types/validator",
-        "debug@4.4.0",
-        "dottie",
-        "inflection@1.13.4",
-        "lodash",
-        "moment",
-        "moment-timezone",
-        "pg-connection-string",
-        "retry-as-promised",
-        "semver",
-        "sequelize-pool@7.1.0",
-        "toposort-class",
-        "uuid@8.3.2",
-        "validator",
-        "wkx"
-      ]
     },
     "serve-static@1.15.0": {
       "integrity": "sha512-XGuRDNjXUijsUL0vl6nSD7cwURuzEgglbOaFuZM9g3kwDXOWVTck0jLzjPzGD+TazWbboZYu52/9/XPdUgne9g==",
@@ -829,9 +744,6 @@
     "uuid@10.0.0": {
       "integrity": "sha512-8XkAphELsDnEGrDxUOHB3RGvXz6TeuYSGEZBOjtTtPm2lwhGBjLgOzLHB63IUWfBpNucQjND6d3AOudO+H3RWQ=="
     },
-    "uuid@8.3.2": {
-      "integrity": "sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg=="
-    },
     "validator@13.12.0": {
       "integrity": "sha512-c1Q0mCiPlgdTVVVIJIrBuxNicYE+t/7oKeI9MWLj3fh/uq2Pxh/3eeWbVZ4OcGW1TUf53At0njHw5SMdA3tmMg=="
     },
@@ -844,9 +756,6 @@
         "@types/node@22.5.4"
       ]
     },
-    "wrappy@1.0.2": {
-      "integrity": "sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ=="
-    },
     "xtend@4.0.2": {
       "integrity": "sha512-LKYU1iAXJXUgAXn9URjiu+MWhyUXHsvfp7mcuYm9dSUKK0/CjtrUwFAxD82/mCWbtLsGjFIad0wIsod4zrTAEQ=="
     }
@@ -854,13 +763,12 @@
   "workspace": {
     "dependencies": [
       "jsr:@std/assert@1",
+      "npm:@sequelize/core@^7.0.0-alpha.42",
       "npm:@sequelize/postgres@^7.0.0-alpha.43",
       "npm:@types/node@^22.10.2",
       "npm:@types/validator@^13.12.2",
       "npm:express@4.18.2",
       "npm:reflect-metadata@~0.2.2",
-      "npm:sequelize-typescript@^2.1.6",
-      "npm:sequelize@^6.37.5",
       "npm:ts-dotenv@~0.9.1"
     ]
   }
