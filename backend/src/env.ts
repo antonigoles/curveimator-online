@@ -9,5 +9,6 @@ const env = {
     POSTGRES_PASSWORD: Deno.env.get("POSTGRES_PASSWORD") || "test_postgres",
     POSTGRES_DATABASE: Deno.env.get("POSTGRES_DATABASE") || "test_curveimator",
     DEV_MODE: Boolean(Deno.env.get("dev_mode")) || true,
+    SOCKETS_PORT: 2115,
 };
 export default env;
