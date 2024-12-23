@@ -8,7 +8,8 @@ const env = {
     POSTGRES_USER: Deno.env.get("POSTGRES_USER") || "test_postgres",
     POSTGRES_PASSWORD: Deno.env.get("POSTGRES_PASSWORD") || "test_postgres",
     POSTGRES_DATABASE: Deno.env.get("POSTGRES_DATABASE") || "test_curveimator",
-    DEV_MODE: Boolean(Deno.env.get("dev_mode")) || true,
-    SOCKETS_PORT: 2115,
+    DEV_MODE: Boolean(Deno.env.get("DEV_MODE")) || true,
+    SOCKETS_PORT: Number(Deno.env.get("SOCKETS_PORT")) || 2115,
+    FORCE_SYNC_ON_START: Boolean(Deno.env.get("FORCE_SYNC_ON_START")) || false,
 };
 export default env;

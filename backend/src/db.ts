@@ -18,6 +18,6 @@ const sequelize = new Sequelize({
     models: [Project, ProjectObject, Keyframe]
 });
 
-await sequelize.sync({ force: true });
+await sequelize.sync({ force: env.FORCE_SYNC_ON_START });
 
 export default sequelize;
