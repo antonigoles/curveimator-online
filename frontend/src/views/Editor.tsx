@@ -66,20 +66,20 @@ function DraggableLine({ setValue, direction }: DraggableLineParameters): JSX.El
         isMouseDown=true;
     }
 
-    useEffect(() => {
-        window.addEventListener("mousemove", handleMoseMove);
-        window.addEventListener("mousedown", handleMoseDown);
-        window.addEventListener("mouseleave", handleMoseDown);
-        window.addEventListener("mouseup", handleMoseUp);
-
-        return () => {
-            window.removeEventListener("mousemove", handleMoseMove);
-            window.removeEventListener("mousedown", handleMoseDown);
-            window.removeEventListener("mouseleave", handleMoseUp);
-            window.removeEventListener("mouseup", handleMoseUp);
-
-        }
-    }, []);
+    // useEffect(() => {
+    //     window.addEventListener("mousemove", handleMoseMove);
+    //     window.addEventListener("mousedown", handleMoseDown);
+    //     window.addEventListener("mouseleave", handleMoseDown);
+    //     window.addEventListener("mouseup", handleMoseUp);
+    //
+    //     return () => {
+    //         window.removeEventListener("mousemove", handleMoseMove);
+    //         window.removeEventListener("mousedown", handleMoseDown);
+    //         window.removeEventListener("mouseleave", handleMoseDown);
+    //         window.removeEventListener("mouseup", handleMoseUp);
+    //
+    //     }
+    // }, []);
 
     return (
         <div
@@ -108,6 +108,7 @@ export function Editor(): JSX.Element {
     const [currentProject, setCurrentProject] = useState<Project|null>(null);
     const [currentTool, setCurrentTool] = useState<EditorTools>(EditorTools.Select);
     const [selectedObject, setSelectedObject] = useState<number|null>(null);
+    const [previewTimestamp, setPreviewTimestamp] = useState<number>(0);
 
     async function initNewProject(projectName: string) {
         const project = await editorService.createNewProject(projectName);
@@ -121,17 +122,21 @@ export function Editor(): JSX.Element {
         });
     }
 
-     function updateEditorContext(editorContextData: Partial<EditorContextData>) {
+    function updateEditorContext(editorContextData: Partial<EditorContextData>) {
         if(editorContextData.selectedObjectId || typeof(editorContextData.selectedObjectId) == 'number') {
             setSelectedObject(editorContextData.selectedObjectId)
         }
 
-        if(editorContextData.project) {
-            setCurrentProject(editorContextData.project)
+        if(editorContextData.previewTimestamp || typeof(editorContextData.previewTimestamp) == 'number') {
+            setPreviewTimestamp(editorContextData.previewTimestamp)
         }
 
         if(editorContextData.currentTool || typeof(editorContextData.currentTool) == 'number') {
             setCurrentTool(editorContextData.currentTool)
+        }
+
+        if(editorContextData.project) {
+            setCurrentProject(editorContextData.project)
         }
     }
 
@@ -220,6 +225,7 @@ export function Editor(): JSX.Element {
                         project: currentProject,
                         currentTool: currentTool,
                         selectedObjectId: selectedObject,
+                        previewTimestamp: previewTimestamp,
                     },
                     updateEditorContext: updateEditorContext,
                 }}>
@@ -230,7 +236,7 @@ export function Editor(): JSX.Element {
                     </div>
                     <div className={"w-full"}>
                         <DraggableLine setValue={setHorizontalSplit} direction={'y'}/>
-                        <Timeline width={width} height={height - height*horizontalSplit-4}/>
+                        <Timeline keyframeTableWidth={width - width*verticalSplit-2} width={width} height={height - height*horizontalSplit-4}/>
                     </div>
                 </EditorContext.Provider>
             }

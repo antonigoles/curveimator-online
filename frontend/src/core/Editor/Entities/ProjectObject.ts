@@ -1,14 +1,18 @@
 import Keyframe from './Keyframe.ts'
 import v2 from "../../Math/v2.tsx";
+import KeyframeableProperty from "./KeyframeableProperty.ts";
 
 export default abstract class ProjectObject {
-    private id: number;
-    private name: string;
-    private type: string;
-    private position: v2;
-    private rotation: number;
-    private scale: number;
-    private keyframes: Keyframe[];
+    protected id: number;
+    protected name: string;
+    protected type: string;
+    protected position: v2;
+    protected rotation: number;
+    protected scale: number;
+    protected keyframes: Keyframe[];
+    protected keyframeMap: {[key: string]: Keyframe[]} = {}; // keyframes by id
+    protected keyframeableProperyMap: {[key: string]: KeyframeableProperty} = {}; // keyframeables by path
+    protected keyframeableProperies: KeyframeableProperty[] = []; // keyframeable list
 
     constructor(
         id: number,
@@ -26,6 +30,34 @@ export default abstract class ProjectObject {
         this.rotation = rotation
         this.scale = scale
         this.keyframes = keyframes;
+        this.initKeyframeables();
+        this.rebuildKeyframeMap();
+    }
+
+    private rebuildKeyframeMap(): void
+    {
+        for (const keyframe of this.keyframes) {
+            this.keyframeMap[keyframe.getPropertyPath()] = [
+                ...(this.keyframeMap[keyframe.getPropertyPath()] ?? []),
+                keyframe
+            ];
+        }
+    }
+
+    private initKeyframeables(): void
+    {
+        this.keyframeableProperies = [
+            ...this.keyframeableProperies,
+            new KeyframeableProperty('x'),
+            new KeyframeableProperty('y'),
+            new KeyframeableProperty('scale'),
+            new KeyframeableProperty('rotation'),
+        ]
+
+        // TODO: Remake it
+        // for (const keyframeable of this.keyframeableProperies) {
+        //     this.keyframeableProperyMap[keyframeable.getFullPropertyPath()] = keyframeable;
+        // }
     }
 
     getId(): number {
@@ -34,5 +66,13 @@ export default abstract class ProjectObject {
 
     getName(): string {
         return this.name;
+    }
+
+    getKeyframableProperties(): KeyframeableProperty[] {
+        return this.keyframeableProperies;
+    }
+
+    getFramesForPath(path: string): Keyframe[] {
+        return this.keyframeMap[path] ?? [];
     }
 }

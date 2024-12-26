@@ -1,7 +1,7 @@
 import ComponentWithDimensions from "../../ParameterTypes/ComponentWithDimensions.ts";
 import {useContext} from "react";
 import {EditorContext, EditorContextType, EditorTools} from "../../../contexts/EditorContext.tsx";
-import {Draw, HighlightAlt} from "@mui/icons-material";
+import {Draw, PanToolAlt} from "@mui/icons-material";
 
 function ObjectList(): JSX.Element {
     const {editorContextData, updateEditorContext} = useContext<EditorContextType>(EditorContext);
@@ -9,19 +9,19 @@ function ObjectList(): JSX.Element {
     return (
         <div>
             {objects.map( obj => (
-                <div
-                    onClick={()=>{
-                        console.log(obj.getId(), editorContextData.selectedObjectId)
-                        updateEditorContext({selectedObjectId: obj.getId()})
-                    }}
-                    key={obj.getId()}
-                    className={ 'select-none p-2 px-4 w-fulltruncate ' +
-                        'hover:cursor-pointer hover:opacity-100 ' +
-                        ` ${editorContextData.selectedObjectId == obj.getId() ? ' opacity-100 ':' opacity-45 '}`
-                    }
-                >
-                    {obj.getName()}
-                </div>
+            <div
+                onClick={()=>{
+                    console.log(obj.getId(), editorContextData.selectedObjectId)
+                    updateEditorContext({selectedObjectId: obj.getId()})
+                }}
+                key={obj.getId()}
+                className={ 'select-none p-2 px-4 w-fulltruncate ' +
+                    'hover:cursor-pointer hover:opacity-100 ' +
+                    ` ${editorContextData.selectedObjectId == obj.getId() ? ' opacity-100 ':' opacity-45 '}`
+                }
+            >
+                {obj.getName()}
+            </div>
             ))}
         </div>
     )
@@ -33,7 +33,7 @@ function ToolList(): JSX.Element {
     const tools = [
         {
             tool: EditorTools.Select,
-            icon: HighlightAlt,
+            icon: PanToolAlt,
         },
         {
             tool: EditorTools.Bezier,

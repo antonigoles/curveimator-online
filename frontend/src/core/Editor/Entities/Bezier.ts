@@ -2,10 +2,10 @@ import ProjectObjectResponse from "../../Network/Responses/ProjectObjectResponse
 import v2 from "../../Math/v2.tsx";
 import ProjectObject from "./ProjectObject.ts";
 import Keyframe from "./Keyframe.ts";
-
+import KeyframeableProperty from "./KeyframeableProperty.ts";
 
 export default class Bezier extends ProjectObject {
-    controlPoints: v2[];
+    protected controlPoints: v2[];
 
     constructor(
         id: number,
@@ -19,6 +19,22 @@ export default class Bezier extends ProjectObject {
     ) {
         super(id, name, type, position, rotation, scale, keyframes);
         this.controlPoints = controlPoints;
+        this.initAdditionalKeyframeables();
+    }
+
+    private initAdditionalKeyframeables(): void
+    {
+        const controlPointPropGroup = new KeyframeableProperty('cp', 'Control Points');
+        for ( let i = 0; i<this.controlPoints.length; i++ ) {
+            const controlPointProp = new KeyframeableProperty(`${i}`, );
+            controlPointProp.assignParent(controlPointPropGroup)
+            const xProp = new KeyframeableProperty('x', 'x', controlPointProp);
+            xProp.assignParent(controlPointProp)
+            const yProp = new KeyframeableProperty('y', 'y', controlPointProp);
+            yProp.assignParent(controlPointProp)
+        }
+
+        this.keyframeableProperies = [...this.keyframeableProperies, controlPointPropGroup]
     }
 
     static fromProjectObjectResponse(response: ProjectObjectResponse): Bezier {

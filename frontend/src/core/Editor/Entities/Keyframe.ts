@@ -21,6 +21,22 @@ export default class Keyframe {
         this.value = value;
     }
 
+    public getId(): number {
+        return this.id;
+    }
+
+    public getPropertyPath(): string {
+        return this.propertyPath;
+    }
+
+    public getTime(): number {
+        return this.time;
+    }
+
+    public getValue(): number {
+        return this.value;
+    }
+
     static fromKeyframeResponse(response: KeyframeResponse) {
         return new Keyframe(response.id, response.projectObjectId, response.propertyPath, response.time, response.value)
     }
