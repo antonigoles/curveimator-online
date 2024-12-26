@@ -1,7 +1,7 @@
 import {useEffect, useState} from "react";
 import {Home} from "./views/Home.tsx";
 import {Editor} from "./views/Editor.tsx";
-import {RouteContext, ViewDataType, Views} from "./contexts/RouterContext.tsx";
+import {EditorViewData, RouteContext, ViewDataType, Views} from "./contexts/RouterContext.tsx";
 
 function viewByRoute(route: Views): JSX.Element
 {
@@ -12,14 +12,27 @@ function viewByRoute(route: Views): JSX.Element
     return views[route] ?? <Home/>;
 }
 
-function evaluateRouteByURL(): Views
-{
+function evaluateRouteByURL(): {view: Views, viewData: ViewDataType} {
     const paths: {[key: string]: Views} = {
         "/": Views.Home,
         "/editor": Views.Editor
     }
 
-    return paths[window.location.pathname] ?? Views.Home;
+    let view = paths[window.location.pathname] ?? Views.Home;
+    let viewData = null;
+    if (view === Views.Editor) {
+        const params = new URLSearchParams(document.location.search);
+        const pParam = params.get("p");
+        if(pParam && !isNaN(Number(pParam))) {
+            viewData = {
+                projectId: Number(pParam)
+            } as EditorViewData
+        } else {
+            view = Views.Home
+        }
+    }
+
+    return {view, viewData};
 }
 
 
@@ -27,8 +40,10 @@ export default function App() {
     const [view, setView] = useState<Views>(Views.Home);
     const [viewData, setViewData] = useState<ViewDataType>();
 
-    useEffect(()=>{
-        setView(evaluateRouteByURL());
+    useEffect(()=> {
+        const routeData = evaluateRouteByURL();
+        setView(routeData.view);
+        setViewData(routeData.viewData)
     },[])
 
     function updateRoute(view: Views, viewData: ViewDataType): void {

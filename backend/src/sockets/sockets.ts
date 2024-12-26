@@ -5,6 +5,7 @@ import Project from "../models/project.model.ts";
 import { validateProjectUpdate } from "../utils/socketValidators.ts";
 import ProjectUpdateFactory from "./ProjectUpdateHandlers/ProjectUpdateFactory.ts";
 import ProjectObject from "../models/projectObject.model.ts";
+import ProjectRepository from "../repository/ProjectRepository.ts";
 
 // TODO: Refactor this file
 
@@ -20,15 +21,22 @@ io.on("connection", (socket) => {
             return;
         }
         if (!data.projectId) return ack({ success: false, msg: "No project with id " + socket.id })
-        const project = await Project.findByPk(data.projectId)
-        if (!project) return ack({ success: false, msg: "Project not found" })
-        const objects = await ProjectObject.findAll({ where: { projectId: data.projectId } });
-        const projectResult =  Object(project.toJSON());
-        projectResult['objects'] = objects.map( obj => obj.toJSON() );
-        const roomAsString = `${data.projectId}`;
-        socket.join(roomAsString);
-        io.to(roomAsString).emit("user-joined", { userId: socket.id });
-        ack({ success: true, project: projectResult })
+        // const project = await Project.findByPk(data.projectId)
+        // if (!project) return ack({ success: false, msg: "Project not found" })
+        // const objects = await ProjectObject.findAll({ where: { projectId: data.projectId } });
+        // const projectResult =  Object(project.toJSON());
+        // projectResult['objects'] = objects.map( obj => obj.toJSON() );
+        try {
+            const project = await ProjectRepository.fullById(data.projectId)
+            if(!project) return ack({ success: false, msg: 'Project not found' });
+            console.log(project.toJSON())
+            const roomAsString = `${data.projectId}`;
+            socket.join(roomAsString);
+            io.to(roomAsString).emit("user-joined", { userId: socket.id });
+            ack({ success: true, project: project })
+        } catch(err: any) {
+            return ack({ success: false, msg: err.message });
+        }
     })
 
     socket.on("project-update", async (data, ack) => {

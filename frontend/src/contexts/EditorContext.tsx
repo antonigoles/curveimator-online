@@ -1,6 +1,5 @@
 import {createContext} from "react";
-import {uuid} from "../core/Math/utils.ts";
-import Project from "../core/Editor/Project.ts";
+import Project from "../core/Editor/Entities/Project.ts";
 import {randomName} from "../core/UI/utils.ts";
 
 export enum EditorTools {
@@ -10,18 +9,22 @@ export enum EditorTools {
 
 export type EditorContextData = {
     currentTool: EditorTools,
-    project: Project
+    project: Project,
+    selectedObjectId: null|number;
 }
 
-export type EditorContext = {
+export type EditorContextType = {
     editorContextData: EditorContextData;
     updateEditorContext: (editorContextData: Partial<EditorContextData>) => void
 }
 
-export const EditorContext = createContext<EditorContext>({
+export const EditorContext = createContext<EditorContextType>({
     editorContextData: {
         currentTool: EditorTools.Select,
-        project: new Project(uuid(), randomName()),
+        project: new Project(0, randomName(), []),
+        selectedObjectId: null,
     },
-    updateEditorContext: () => {}
+    updateEditorContext: () => {
+        throw new Error('Editor Context running on default value; somehow was not initialized')
+    }
 })

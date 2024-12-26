@@ -13,7 +13,9 @@ export default function Button({label, onInput, className, disabled}: InputParam
     }
 
     return (
-        <p onClick={() => { if ( onInput ) onInput() }}
+        <p onClick={() => {
+            if ( onInput ) onInput()
+        }}
            className={classes}>
             {label}
         </p>

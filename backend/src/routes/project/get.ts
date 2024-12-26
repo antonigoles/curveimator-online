@@ -1,8 +1,8 @@
 import express from "npm:express";
 import Route from "../Route.ts";
-import Project from "../../models/project.model.ts";
 import validateRequest from "../../utils/validateRequest.ts";
 import env from "../../env.ts";
+import ProjectRepository from "../../repository/ProjectRepository.ts";
 
 async function handleRequest(req: express.Request, res: express.Response) {
     const validation = validateRequest([
@@ -12,7 +12,7 @@ async function handleRequest(req: express.Request, res: express.Response) {
         res.status(400).json({ "error": "Request body error" });
     }
     try {
-        const project = await Project.findByPk(Number(req.params.id));
+        const project = await ProjectRepository.fullById(Number(req.params.id));
         if ( project === null ) {
             res.status(404).json({ "error": "Project not found." });
         } else {

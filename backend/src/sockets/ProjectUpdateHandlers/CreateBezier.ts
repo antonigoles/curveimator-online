@@ -32,6 +32,7 @@ export default class CreateBezier implements ProjectUpdate {
         const bezier = await ProjectObject.create({
             projectId: this.projectId,
             name: this.name,
+            type: 'bezier',
             serializedData: this.controlPoints,
             position: this.position ?? [0,0],
             scale: this.scale ?? 1.0,

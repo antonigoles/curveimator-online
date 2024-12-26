@@ -26,4 +26,12 @@ export default class Project extends Model<InferAttributes<Project>, InferCreati
 
     @HasMany(() => ProjectObject, 'projectId')
     declare objects?: NonAttribute<ProjectObject[]>;
+
+    override toJSON(): object {
+        return {
+          id: this.id,
+          name: this.name,
+          objects: (this.objects ?? []).map( obj => obj.toJSON() ),
+        };
+    }
 }

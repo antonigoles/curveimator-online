@@ -1,4 +1,4 @@
-import ComponentWithDimensions from "../../ParameterTypes/ComponentWithDimensions.tsx";
+import ComponentWithDimensions from "../../ParameterTypes/ComponentWithDimensions.ts";
 
 export default function Timeline({width, height}: ComponentWithDimensions): JSX.Element {
     return (

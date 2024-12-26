@@ -11,6 +11,8 @@
     "npm:@sequelize/postgres@^7.0.0-alpha.43": "7.0.0-alpha.43",
     "npm:@types/node@^22.10.2": "22.10.2",
     "npm:@types/validator@^13.12.2": "13.12.2",
+    "npm:cors@*": "2.8.5",
+    "npm:cors@^2.8.5": "2.8.5",
     "npm:express@*": "4.18.2",
     "npm:express@4.18.2": "4.18.2",
     "npm:reflect-metadata@~0.2.2": "0.2.2",
@@ -206,6 +208,13 @@
     },
     "cookie@0.5.0": {
       "integrity": "sha512-YZ3GUyn/o8gfKJlnlX7g7xq4gyO6OSuhGPKaaGssGB2qgDUS0gPgtTvoyZLTt9Ab6dC4hfc9dV5arkvc/OCmrw=="
+    },
+    "cors@2.8.5": {
+      "integrity": "sha512-KIHbLJqu73RGr/hnbrO9uBeixNGuvSQjul/jdFvS/KFSIH1hWVd1ng7zOHx+YrEfInLG7q4n6GHQ9cDtxv/P6g==",
+      "dependencies": [
+        "object-assign",
+        "vary"
+      ]
     },
     "dayjs@1.11.13": {
       "integrity": "sha512-oaMBel6gjolK862uaPQOVTA7q3TZhuSvuMQAAglQDOWYO9A91IrAOUJEyKVlqJlHE0vq5p5UXxzdPfMH/x6xNg=="
@@ -476,6 +485,9 @@
     },
     "negotiator@0.6.3": {
       "integrity": "sha512-+EUsqGPLsM+j/zdChZjsnX51g4XrHFOIXwfnCVPGlQk/k5giakcKsuxCObBRu6DSm9opw/O6slWbJdghQM4bBg=="
+    },
+    "object-assign@4.1.1": {
+      "integrity": "sha512-rJgTQnkUnH1sFw8yT6VSU3zD3sWmu6sZhIseY8VX+GRu3P6F7Fu+JNDoXfklElbLJSnc3FUQHVe4cU5hj+BcUg=="
     },
     "object-inspect@1.13.3": {
       "integrity": "sha512-kDCGIbxkDSXE3euJZZXzc6to7fCrKHNI/hSRQnRuQ+BWjFNzZwiFF8fj/6o2t2G9/jTj8PSIYTfCLelLZEeRpA=="
@@ -926,6 +938,7 @@
       "npm:@sequelize/postgres@^7.0.0-alpha.43",
       "npm:@types/node@^22.10.2",
       "npm:@types/validator@^13.12.2",
+      "npm:cors@^2.8.5",
       "npm:express@4.18.2",
       "npm:reflect-metadata@~0.2.2",
       "npm:ts-dotenv@~0.9.1"

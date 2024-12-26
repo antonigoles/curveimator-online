@@ -1,12 +1,9 @@
 import {RefObject, useEffect, useRef} from "react";
 import v2 from "../core/Math/v2.tsx";
 import v3 from "../core/Math/v3.tsx";
-import PropsWithChildren from "./ParameterTypes/PropsWithChildren.ts";
-import {createPortal} from "react-dom";
 
 function animate(canvasRef: RefObject<HTMLCanvasElement>) {
     const triangles: { position: v3, speedBoost: number }[] = [];
-    console.log(new v3(0,0,0).minus(new v3(0, 10,0)).z)
     function drawTriangles(
         ctx: CanvasRenderingContext2D,
         count: number,

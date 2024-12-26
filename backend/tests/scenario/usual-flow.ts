@@ -1,6 +1,6 @@
 import { expect } from "jsr:@std/expect";
-import { io, Socket } from "npm:socket.io-client@4.7.5";
-import {httpPost, httpGet, waitForSocket, waitForDisconnect, waitForEmit, writeTestLogs} from "../testUtils.ts";
+import { io } from "npm:socket.io-client@4.7.5";
+import {httpPost, httpGet, waitForSocket, waitForDisconnect, writeTestLogs} from "../testUtils.ts";
 import env from "../../src/env.ts";
 
 Deno.test("0. Test API Connetion", async () => {

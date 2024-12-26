@@ -6,7 +6,8 @@ import env from "../../env.ts";
 
 async function handleRequest(req: express.Request, res: express.Response) {
     const validation = validateRequest([
-        req?.body?.name?.length > 3
+        req?.body?.name?.length > 3,
+        req?.body?.name?.length < 100
     ]);
     if (!validation) {
         res.status(400).json({ "error": "Request body error" });

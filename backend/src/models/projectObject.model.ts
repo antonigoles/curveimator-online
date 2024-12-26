@@ -27,6 +27,9 @@ export default class ProjectObject extends Model<InferAttributes<ProjectObject>,
     @Attribute(DataTypes.STRING)
     declare name: string;
 
+    @Attribute(DataTypes.STRING)
+    declare type: string;
+
     @Attribute(DataTypes.JSON)
     declare serializedData: object;
 
@@ -48,4 +51,17 @@ export default class ProjectObject extends Model<InferAttributes<ProjectObject>,
 
     @HasMany(() => Keyframe, 'projectObjectId')
     declare keyframes?: NonAttribute<Keyframe[]>;
+
+    override toJSON(): object {
+        return {
+            id: this.id,
+            name: this.name,
+            type: this.type,
+            serializedData: this.serializedData,
+            position: this.position,
+            rotation: this.rotation,
+            scale: this.scale,
+            keyframes: (this.keyframes ?? []).map( keyframe => keyframe.toJSON() ),
+        };
+    }
 }

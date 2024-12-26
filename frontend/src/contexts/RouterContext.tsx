@@ -6,8 +6,9 @@ export enum Views {
 }
 
 export type EditorViewData = {
-    isNewProject: boolean,
-    projectName: string,
+    isNewProject?: boolean,
+    projectName?: string,
+    projectId?: number
 }
 
 export type ViewDataType = null | undefined | EditorViewData
