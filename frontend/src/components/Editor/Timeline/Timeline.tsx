@@ -4,6 +4,7 @@ import {EditorContext, EditorContextType} from "../../../contexts/EditorContext.
 import KeyframeableProperty from "../../../core/Editor/Entities/KeyframeableProperty.ts";
 import useWindowDimensions from "../../useWindowDimensions.tsx";
 import {ExpandMore} from "@mui/icons-material";
+import Keyframe from "../../../core/Editor/Entities/Keyframe.ts";
 
 type KeyframeLineParams = {
     keyframeTableWidth: number
@@ -34,7 +35,7 @@ function KeyframeLine({keyframeTableWidth, keyframeableProperty}: KeyframeLinePa
                     {keyframeableProperty.getPrettyName()}
                 </div>
                 <div style={{width: `${keyframeTableWidth}px`}} className={`border-b-[1px] border-b-lightGray relative bg-blackGray h-[30px]`}>
-                    {frames.map( frame => (
+                    {frames.map( (frame: Keyframe) => (
                         <div
                             key={frame.getId()}
                             style={{ left: `${15 + (frame.getTime()/60) * (keyframeTableWidth-40)}px`, top: '7.5px' }}
@@ -89,8 +90,10 @@ type TimeNeedleParameters = {
 
 function TimeNeedle({ minPosition, maxPosition, height }: TimeNeedleParameters): JSX.Element {
     const dotRef = useRef<HTMLDivElement>(null);
+    const timestampRef = useRef<HTMLDivElement>(null);
     const {editorContextData, updateEditorContext} = useContext<EditorContextType>(EditorContext);
 
+    let isDragging = false;
     let isMouseDown = false;
     let mouseOver = false;
     let mouseOverOffTimer: number|null = null;
@@ -115,16 +118,25 @@ function TimeNeedle({ minPosition, maxPosition, height }: TimeNeedleParameters):
                 }
             }
 
-            if (mouseOver) {
-                document.body.style.cursor = "pointer";
+            if (mouseOver && !isDragging) {
+                document.body.style.cursor = "ew-resize";
                 if(isMouseDown) {
+                    if(timestampRef.current) {
+                        timestampRef.current.style.display = 'flex';
+                    }
                     const xNorm = Math.max(Math.min(maxPosition, event.clientX), minPosition) - minPosition;
+                    console.log(maxPosition, minPosition)
+                    // console.log((xNorm/(maxPosition-minPosition)) * 60)
                     updateEditorContext({
                         previewTimestamp: (xNorm/(maxPosition-minPosition)) * 60
                     })
                 }
             } else {
-                if(document.body.style.cursor == "pointer")
+                if(timestampRef.current) {
+                    timestampRef.current.style.display = 'none';
+                }
+
+                if(document.body.style.cursor == "ew-resize")
                     document.body.style.cursor = "inherit";
             }
         }
@@ -139,41 +151,55 @@ function TimeNeedle({ minPosition, maxPosition, height }: TimeNeedleParameters):
         isMouseDown=true;
     }
 
+    function handleDragStop() {
+        isDragging = false;
+    }
+
+    function handleDrag() {
+        isDragging = true;
+    }
+
     useEffect(() => {
         window.addEventListener("mousemove", handleMoseMove);
         window.addEventListener("mousedown", handleMoseDown);
+        window.addEventListener("mousedown", handleMoseMove);
         window.addEventListener("mouseleave", handleMoseDown);
         window.addEventListener("mouseup", handleMoseUp);
+        window.addEventListener("drag", handleDrag)
+        window.addEventListener("dragstart", handleDrag)
+        window.addEventListener("dragend", handleDragStop)
 
         return () => {
             window.removeEventListener("mousemove", handleMoseMove);
             window.removeEventListener("mousedown", handleMoseDown);
             window.removeEventListener("mouseleave", handleMoseDown);
             window.removeEventListener("mouseup", handleMoseUp);
+            window.removeEventListener("mousedown", handleMoseMove);
         }
-    }, []);
-
-    function getX() {
-        return -6 + minPosition + (editorContextData.previewTimestamp/60)*(maxPosition-minPosition)
-    }
+    }, [minPosition, maxPosition]);
 
     return (
         <div
+            draggable={false}
             ref={dotRef}
             style={{
-                left: `${getX()}px`,
+                left: `${-6 + minPosition + (editorContextData.previewTimestamp/60)*(maxPosition-minPosition)}px`,
                 top: '-2.5px',
             }}
             className={'absolute z-50 w-[12px] h-[45px] rounded-full bg-yellow-200 shadow-2xl'}
         >
             <div
-                style={{ left: '-22px', top: '-36px' }}
+                ref={timestampRef}
+                draggable={false}
+                style={{ display: 'none', left: '-38px', top: '-36px' }}
                 className={'shadow-md absolute bg-white text-black font-bold rounded-md select-none text-center px-2 py-1'}
             >
                 {Math.floor(editorContextData.previewTimestamp / 60).toString().padStart(2, '0')}
-                :{(Math.round(editorContextData.previewTimestamp % 60)).toString().padStart(2, '0')}
+                :{(Math.floor(editorContextData.previewTimestamp % 60)).toString().padStart(2, '0')}
+                :{Math.floor(((editorContextData.previewTimestamp % 1000) % 1) * 1000).toString().padStart(3, '0')}
             </div>
             <div
+                draggable={false}
                 style={{ height: `${height}px`, left: '6px' }}
                 className={'absolute w-[1px] bg-yellow-200'}
             ></div>
@@ -187,13 +213,14 @@ export default function Timeline({keyframeTableWidth, height}: {
     const {width} = useWindowDimensions()
     const {editorContextData} = useContext<EditorContextType>(EditorContext);
     return (
-        <div style={{height: `${height}px`, marginTop: '25px'}} className={`relative w-full bg-darkGray flex flex-col`}>
-            <TimeNeedle minPosition={width-keyframeTableWidth + 15} maxPosition={width} height={height}/>
+        <div style={{height: `${height-25}px`, marginTop: '25px'}} className={`relative w-full bg-darkGray flex flex-col`}>
+            <TimeNeedle minPosition={width-keyframeTableWidth + 15} maxPosition={width-40} height={height-25}/>
             <div className={'flex h-[40px] z-10 flex-row shadow-lg'}>
                 <div style={{width: `${width - keyframeTableWidth}px`, height: '100%'}}></div>
                 <div style={{width: `${keyframeTableWidth}px`, height: '100%'}} className={'relative border-1'}>
                     {[...(new Array(120))].map((_, i) =>
                         <div
+                            key={i}
                             style={{
                                 bottom: `0px`,
                                 left: `${15 + (i/120) * (keyframeTableWidth-40)}px`,
@@ -210,7 +237,7 @@ export default function Timeline({keyframeTableWidth, height}: {
                         .project
                         .getObjectById(editorContextData.selectedObjectId)
                         .getKeyframableProperties()
-                        .map(p =>
+                        .map((p: KeyframeableProperty) =>
                             <KeyframeLine key={p.getFullPropertyPath()} keyframeableProperty={p}
                                           keyframeTableWidth={keyframeTableWidth}/>
                         )

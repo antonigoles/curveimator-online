@@ -2,16 +2,17 @@ import ComponentWithDimensions from "../../ParameterTypes/ComponentWithDimension
 import {useContext} from "react";
 import {EditorContext, EditorContextType, EditorTools} from "../../../contexts/EditorContext.tsx";
 import {Draw, PanToolAlt} from "@mui/icons-material";
+import {editorService} from "../../../core/DIContainer.tsx";
 
 function ObjectList(): JSX.Element {
     const {editorContextData, updateEditorContext} = useContext<EditorContextType>(EditorContext);
     const objects = editorContextData?.project?.getObjects();
     return (
-        <div>
+        <div className={'h-full overflow-y-scroll'}>
             {objects.map( obj => (
             <div
                 onClick={()=>{
-                    console.log(obj.getId(), editorContextData.selectedObjectId)
+                    editorService.changeSelectedObjectId(obj.getId())
                     updateEditorContext({selectedObjectId: obj.getId()})
                 }}
                 key={obj.getId()}
@@ -42,7 +43,7 @@ function ToolList(): JSX.Element {
     ]
 
     return (
-        <div className={'w-full p-2 flex flex-row justify-end border-b-2 border-lightGray'}>
+        <div className={'w-full p-2 flex flex-row justify-end border-b-2 border-lightGray h-[9%]'}>
             {tools.map(
                 tool =>
                     (
@@ -67,7 +68,7 @@ function ToolList(): JSX.Element {
 
 export default function LeftPanel({width, height}: ComponentWithDimensions): JSX.Element {
     return (
-        <div style={{width: `${width}px`, height: `${height}px`}} className={`bg-darkGray`}>
+        <div style={{width: `${width}px`, height: `${height}px`}} className={`bg-darkGray flex flex-col`}>
             <ToolList />
             <ObjectList />
         </div>

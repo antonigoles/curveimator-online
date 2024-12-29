@@ -1,4 +1,4 @@
-import Project from "../Entities/Project.ts";
+import {Project} from "../Entities/Project.ts";
 import APIService from "../../Network/APIService.ts";
 
 export default class ProjectRepository {

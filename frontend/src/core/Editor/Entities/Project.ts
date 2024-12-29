@@ -1,9 +1,9 @@
 import ProjectResponse from "../../Network/Responses/ProjectResponse.ts";
 import Bezier from "./Bezier.ts";
 
-type ProjectObjectTypes = Bezier
+export type ProjectObjectTypes = Bezier
 
-export default class Project {
+export class Project {
     private readonly name: string;
     private readonly id: number;
     private readonly projectObjects: ProjectObjectTypes[]
@@ -36,6 +36,11 @@ export default class Project {
 
     getObjectById(id: number): ProjectObjectTypes {
         return this.projectObjectsMap[id];
+    }
+
+    addBezier(bezier: Bezier): void {
+        this.projectObjects.push(bezier);
+        this.rebuildProjectObjectsMap();
     }
 
     static fromProjectResponse(response: ProjectResponse) {

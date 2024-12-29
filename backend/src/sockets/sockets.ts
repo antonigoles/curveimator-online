@@ -4,12 +4,20 @@ import env from "../env.ts";
 import Project from "../models/project.model.ts";
 import { validateProjectUpdate } from "../utils/socketValidators.ts";
 import ProjectUpdateFactory from "./ProjectUpdateHandlers/ProjectUpdateFactory.ts";
-import ProjectObject from "../models/projectObject.model.ts";
 import ProjectRepository from "../repository/ProjectRepository.ts";
 
 // TODO: Refactor this file
 
-const io = new Server();
+
+/// very safe cors settings™
+const io = new Server({
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST"],
+        allowedHeaders: ["Content-Type", "Authorization"],
+        credentials: true,
+    },
+});
 
 
 io.on("connection", (socket) => {

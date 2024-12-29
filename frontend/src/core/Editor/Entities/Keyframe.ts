@@ -21,6 +21,10 @@ export default class Keyframe {
         this.value = value;
     }
 
+    public getProjectObjectId(): number {
+        return this.projectObjectId;
+    }
+
     public getId(): number {
         return this.id;
     }

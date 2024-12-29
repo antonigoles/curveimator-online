@@ -1,8 +1,10 @@
 import Keyframe from './Keyframe.ts'
 import v2 from "../../Math/v2.tsx";
 import KeyframeableProperty from "./KeyframeableProperty.ts";
+import RenderableObject from "../../Render/RenderableObject.ts";
+import ObjectInTime from "../../Render/ObjectInTime.ts";
 
-export default abstract class ProjectObject {
+export default abstract class ProjectObject implements RenderableObject {
     protected id: number;
     protected name: string;
     protected type: string;
@@ -75,4 +77,22 @@ export default abstract class ProjectObject {
     getFramesForPath(path: string): Keyframe[] {
         return this.keyframeMap[path] ?? [];
     }
+
+    getType(): string {
+        return this.type;
+    }
+
+    getPosition(): v2 {
+        return this.position;
+    }
+
+    getScale(): number {
+        return this.scale;
+    }
+
+    getRotation(): number {
+        return this.scale;
+    }
+
+    abstract getObjectInTime(time: number): ObjectInTime;
 }

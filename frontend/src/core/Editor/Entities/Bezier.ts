@@ -3,6 +3,8 @@ import v2 from "../../Math/v2.tsx";
 import ProjectObject from "./ProjectObject.ts";
 import Keyframe from "./Keyframe.ts";
 import KeyframeableProperty from "./KeyframeableProperty.ts";
+import ObjectInTime from "../../Render/ObjectInTime.ts";
+import Color from "../../Math/color.tsx";
 
 export default class Bezier extends ProjectObject {
     protected controlPoints: v2[];
@@ -54,4 +56,36 @@ export default class Bezier extends ProjectObject {
             points
         );
     }
+
+    addControlPoint(point: v2): void {
+        this.controlPoints.push(point);
+    }
+
+    baseCurve(): v2[] {
+        const PRECISION = 50; // PRECISION stops between control points
+        const result: v2[] = [];
+        for ( let t = 0; t <= 1; t+= 1/PRECISION ) {
+            let pt = this.controlPoints[this.controlPoints.length-1];
+            for ( let i = this.controlPoints.length-1; i>=0; i-- ) {
+                pt = pt.scale((1 - t)).plus(this.controlPoints[i].scale(t));
+            }
+            result.push(pt);
+        }
+        return result;
+    }
+
+    getControlPoints(): v2[] {
+        return this.controlPoints;
+    }
+
+    getObjectInTime(time: number): ObjectInTime {
+        // TODO: Calculate Bezier
+        return {
+            lines: [this.baseCurve()],
+            lineThickness: 4,
+            color: new Color(255,255,255,1)
+        };
+    }
+
+
 }

@@ -8,7 +8,7 @@ import {LoadingFullScreen} from "../components/LoadingFullScreen.tsx";
 import InfoWindowModal from "../components/InfoWindowModal.tsx";
 import {waitFor} from "../core/UI/utils.ts";
 import {EditorContext, EditorContextData, EditorTools} from "../contexts/EditorContext.tsx";
-import Project from "../core/Editor/Entities/Project.ts";
+import {Project} from "../core/Editor/Entities/Project.ts";
 import LeftPanel from "../components/Editor/LeftPanel/LeftPanel.tsx";
 
 type DraggableLineParameters = {
@@ -112,30 +112,32 @@ export function Editor(): JSX.Element {
 
     async function initNewProject(projectName: string) {
         const project = await editorService.createNewProject(projectName);
+        await editorService.changeProject(project);
         window.location.href = `/editor?p=${project.getId()}`;
     }
 
     async function loadProject(id: number): Promise<void> {
         const project = await editorService.getProjectById(id);
+        await editorService.changeProject(project);
         updateEditorContext({
             project: project
         });
     }
 
     function updateEditorContext(editorContextData: Partial<EditorContextData>) {
-        if(editorContextData.selectedObjectId || typeof(editorContextData.selectedObjectId) == 'number') {
+        if(editorContextData.selectedObjectId !== undefined) {
             setSelectedObject(editorContextData.selectedObjectId)
         }
 
-        if(editorContextData.previewTimestamp || typeof(editorContextData.previewTimestamp) == 'number') {
+        if(editorContextData.previewTimestamp !== undefined) {
             setPreviewTimestamp(editorContextData.previewTimestamp)
         }
 
-        if(editorContextData.currentTool || typeof(editorContextData.currentTool) == 'number') {
+        if(editorContextData.currentTool !== undefined) {
             setCurrentTool(editorContextData.currentTool)
         }
 
-        if(editorContextData.project) {
+        if(editorContextData.project !== undefined) {
             setCurrentProject(editorContextData.project)
         }
     }

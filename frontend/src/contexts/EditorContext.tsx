@@ -1,5 +1,5 @@
 import {createContext} from "react";
-import Project from "../core/Editor/Entities/Project.ts";
+import {Project} from "../core/Editor/Entities/Project.ts";
 import {randomName} from "../core/UI/utils.ts";
 
 export enum EditorTools {
