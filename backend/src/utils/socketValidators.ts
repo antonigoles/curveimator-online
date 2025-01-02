@@ -55,6 +55,23 @@ export function validateCreateBezier(data: any): ValidatorResult
         if (isNaN(data.data.rotation)) return incorrectType('data.rotation');
     }
 
+    if("color" in data.data) {
+        if (!(data.data.color instanceof Array)) return incorrectType('data.data.color');
+        if (data.data.color.length !== 4) return wrongSize(`data.data.color`)
+        if (isNaN(data.data.color[0]))  return incorrectType(`data.data.color[0]`);
+        if (isNaN(data.data.color[1]))  return incorrectType(`data.data.color[1]`);
+        if (isNaN(data.data.color[2]))  return incorrectType(`data.data.color[2]`);
+        if (isNaN(data.data.color[3]))  return incorrectType(`data.data.color[3]`);
+    }
+
+    if("strokeProgress" in data.data) {
+        if (isNaN(data.data.strokeProgress)) return incorrectType('data.strokeProgress');
+    }
+
+    if("strokeThickness" in data.data) {
+        if (isNaN(data.data.strokeThickness)) return incorrectType('data.strokeThickness');
+    }
+
     if (!(data.data.controlPoints instanceof Array)) return incorrectType('data.data.controlPoints');
     for ( let i = 0; i<data.data.controlPoints.length; i++ ) {
         const controlPoint = data.data.controlPoints[i]
@@ -131,6 +148,23 @@ export function validateUpdateBezier(data: any): ValidatorResult
         if (isNaN(data.data.rotation)) return incorrectType('data.rotation');
     }
 
+    if("color" in data.data) {
+        if (!(data.data.color instanceof Array)) return incorrectType('data.data.color');
+        if (data.data.color.length !== 4) return wrongSize(`data.data.color`)
+        if (isNaN(data.data.color[0]))  return incorrectType(`data.data.color[0]`);
+        if (isNaN(data.data.color[1]))  return incorrectType(`data.data.color[1]`);
+        if (isNaN(data.data.color[2]))  return incorrectType(`data.data.color[2]`);
+        if (isNaN(data.data.color[3]))  return incorrectType(`data.data.color[3]`);
+    }
+
+    if("strokeProgress" in data.data) {
+        if (isNaN(data.data.strokeProgress)) return incorrectType('data.strokeProgress');
+    }
+
+    if("strokeThickness" in data.data) {
+        if (isNaN(data.data.strokeThickness)) return incorrectType('data.strokeThickness');
+    }
+
     if ("controlPoints" in data.data) {
         if (!(data.data.controlPoints instanceof Array)) return incorrectType('data.data.controlPoints');
         for ( let i = 0; i<data.data.controlPoints.length; i++ ) {
@@ -188,6 +222,7 @@ export function validateProjectUpdate(data: any): ValidatorResult
     if (data.type === "create") return validateCreate(data);
     if (data.type === "update") return validateUpdate(data);
     if (data.type === "delete") return validateDelete(data);
+    console.log(data)
     return validatorFinish('validateProjectUpdate');
 }
 

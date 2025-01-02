@@ -15,6 +15,9 @@ interface CreatePayload {
         position?: number[],
         scale?: number,
         rotation?: number,
+        color?: number[],
+        strokeProgress?: number,
+        strokeThickness? :number
     } | {
         type: 'keyframe',
         objectId: number,
@@ -34,6 +37,9 @@ interface UpdatePayload {
         position?: number[],
         scale?: number,
         rotation?: number,
+        color?: number[],
+        strokeProgress?: number,
+        strokeThickness? :number
     } | {
         type: 'keyframe',
         id: number,
@@ -68,6 +74,9 @@ export default class ProjectUpdateFactory {
                 position: payload.data.position,
                 scale: payload.data.scale,
                 rotation: payload.data.rotation,
+                color: payload.data.color,
+                strokeProgress: payload.data.strokeProgress,
+                strokeThickness: payload.data.strokeThickness,
             });
         }
 
@@ -94,6 +103,9 @@ export default class ProjectUpdateFactory {
                 position: payload.data.position,
                 scale: payload.data.scale,
                 rotation: payload.data.rotation,
+                color: payload.data.color,
+                strokeProgress: payload.data.strokeProgress,
+                strokeThickness: payload.data.strokeThickness,
             });
         }
 

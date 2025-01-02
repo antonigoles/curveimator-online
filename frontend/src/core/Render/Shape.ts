@@ -1,5 +1,5 @@
-import v2 from "../Math/v2.tsx";
-import color from "../Math/color.tsx";
+import v2 from "../Math/v2.ts";
+import color from "../Math/color.ts";
 
 export default interface Shape {
     points: v2[];

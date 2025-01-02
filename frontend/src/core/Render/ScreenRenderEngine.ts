@@ -1,5 +1,5 @@
 import RenderableObject from "./RenderableObject.ts";
-import Color from "../Math/color.tsx";
+import Color from "../Math/color.ts";
 import Arc from "./Arc.ts";
 import Shape from "./Shape.ts";
 import {Primitive} from "./ObjectInTime.ts";

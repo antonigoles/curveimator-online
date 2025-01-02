@@ -1,12 +1,16 @@
 import ProjectObjectResponse from "../../Network/Responses/ProjectObjectResponse.ts";
-import v2 from "../../Math/v2.tsx";
+import v2 from "../../Math/v2.ts";
 import ProjectObject from "./ProjectObject.ts";
 import Keyframe from "./Keyframe.ts";
 import {ObjectInTime} from "../../Render/ObjectInTime.ts";
-import Color from "../../Math/color.tsx";
+import Color from "../../Math/color.ts";
+import KeyframeableProperty from "./KeyframeableProperty.ts";
 
 export default class Bezier extends ProjectObject {
     protected controlPoints: v2[];
+    protected strokeProgress: number;
+    protected strokeThickness: number;
+    protected strokeColor: Color;
 
     constructor(
         id: number,
@@ -17,16 +21,35 @@ export default class Bezier extends ProjectObject {
         scale: number,
         keyframes: Keyframe[],
         controlPoints: v2[],
+        strokeProgress: number,
+        strokeThickness: number,
+        strokeColor: Color
     ) {
         super(id, name, type, position, rotation, scale, keyframes);
         this.controlPoints = controlPoints;
+        this.strokeProgress = strokeProgress;
+        this.strokeColor = strokeColor;
+        this.strokeThickness = strokeThickness;
         this.initAdditionalKeyframeables();
     }
 
     private initAdditionalKeyframeables(): void
     {
+        const colorGroup = new KeyframeableProperty('strokeColor', 'Color')
+        const rProp = new KeyframeableProperty('r', 'R', colorGroup)
+        rProp.assignParent(colorGroup);
+        const gProp = new KeyframeableProperty('g', 'G', colorGroup)
+        gProp.assignParent(colorGroup);
+        const bProp = new KeyframeableProperty('b', 'B', colorGroup)
+        bProp.assignParent(colorGroup);
+        const aProp = new KeyframeableProperty('a', 'A', colorGroup)
+        aProp.assignParent(colorGroup);
 
-
+        this.keyframeableProperies = [
+            ...this.keyframeableProperies,
+            colorGroup,
+            new KeyframeableProperty('strokeProgress', 'Stroke progress')
+        ]
         // Let's deprecate control point animations for now : )
         //
         // const controlPointPropGroup = new KeyframeableProperty('cp', 'Control Points');
@@ -43,10 +66,36 @@ export default class Bezier extends ProjectObject {
     }
 
     static fromProjectObjectResponse(response: ProjectObjectResponse): Bezier {
-        if(!(response.serializedData instanceof Array)) {
+        if(!('controlPoints' in response.serializedData)) {
             throw new Error(`Serialized data for object ${response.id} does not match expected data type`)
         }
-        const points: v2[] = response.serializedData.map(point => new v2(point[0], point[1]));
+
+        if(!('strokeThickness' in response.serializedData)) {
+            throw new Error(`Serialized data for object ${response.id} does not match expected data type`)
+        }
+
+        if(!('strokeProgress' in response.serializedData)) {
+            throw new Error(`Serialized data for object ${response.id} does not match expected data type`)
+        }
+
+        if(!('color' in response.serializedData)) {
+            throw new Error(`Serialized data for object ${response.id} does not match expected data type`)
+        }
+
+        if(!(response.serializedData.controlPoints instanceof Array)) {
+            throw new Error(`Serialized data for object ${response.id} does not match expected data type`)
+        }
+
+        if(!(response.serializedData.color instanceof Array)) {
+            throw new Error(`Serialized data for object ${response.id} does not match expected data type`)
+        }
+
+        const points: v2[] = response.serializedData.controlPoints.map(point => new v2(point[0], point[1]));
+        const cArr = response.serializedData.color;
+        const color: Color = new Color(cArr[0], cArr[1], cArr[2], cArr[3]);
+        const strokeProgress: number = Number(response.serializedData.strokeProgress);
+        const strokeThickness: number = Number(response.serializedData.strokeThickness);
+
 
         return new Bezier(
             response.id,
@@ -56,7 +105,10 @@ export default class Bezier extends ProjectObject {
             response.rotation,
             response.scale,
             response.keyframes.map( response => Keyframe.fromKeyframeResponse(response) ),
-            points
+            points,
+            strokeProgress,
+            strokeThickness,
+            color
         );
     }
 
@@ -102,8 +154,8 @@ export default class Bezier extends ProjectObject {
             primitivesToRender: [{
                 type: 'Shape',
                 points: this.curvePostTransform(),
-                strokeThickness: 4,
-                strokeColor: new Color(255,255,255,1)
+                strokeThickness: this.strokeThickness,
+                strokeColor: this.strokeColor
             }],
         };
     }
@@ -113,6 +165,7 @@ export default class Bezier extends ProjectObject {
     }
 
     // this should be static over Bezier's entire lifetime
+    // TODO: Think of a good massCenter prediction to make this value possibly dynamic
     getMassCenter(): v2 {
         return this.controlPoints[0];
     }

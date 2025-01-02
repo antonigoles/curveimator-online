@@ -1,4 +1,4 @@
-import v2 from "./v2.tsx";
+import v2 from "./v2.ts";
 
 export function uuid(): string {
     return crypto.randomUUID();

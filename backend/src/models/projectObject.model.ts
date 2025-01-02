@@ -17,6 +17,13 @@ import {
 } from '@sequelize/core/decorators-legacy';
 import Keyframe from "./keyframe.model.ts";
 
+type SerializedDataType = {
+    controlPoints: number[][],
+    color: number[],
+    strokeProgress: number,
+    strokeThickness: number,
+}
+
 @Table
 export default class ProjectObject extends Model<InferAttributes<ProjectObject>, InferCreationAttributes<ProjectObject>> {
     @Attribute(DataTypes.INTEGER)
@@ -31,7 +38,7 @@ export default class ProjectObject extends Model<InferAttributes<ProjectObject>,
     declare type: 'bezier';
 
     @Attribute(DataTypes.JSON)
-    declare serializedData: object;
+    declare serializedData: SerializedDataType;
 
     @Attribute(DataTypes.JSON)
     @Default([0,0])

@@ -42,6 +42,8 @@ fn: async() => {
             controlPoints: [[1,0], [2,3], [3,1], [4,0]],
             position: [0, 2],
             rotation: 0.2,
+            color: [2, 1, 0, 1],
+            strokeProgress: 0.8,
             scale: 0.7,
             name: 'Bezier Curve #1'
         },
@@ -70,7 +72,7 @@ fn: async() => {
     expect(response.project).toHaveProperty('objects');
     expect(response.project.objects.length).toBe(1)
     expect(response.project.objects[0]).toHaveProperty('serializedData');
-    expect(response.project.objects[0].serializedData.toString()).toBe(projectDataToEmit.data.controlPoints.toString());
+    expect(response.project.objects[0].serializedData.controlPoints.toString()).toBe(projectDataToEmit.data.controlPoints.toString());
 
     const createdObjectId = response.project.objects[0].id;
 
@@ -135,6 +137,8 @@ fn: async() => {
             id: createdObjectId,
             name: 'New bezier name #90',
             controlPoints: [[1.7, 2.3], [2.1,32], [31,12], [324,-0.2]],
+            color: [243, 21, 23, 3],
+            strokeProgress: 0.2,
             position: [0.7, 2.3],
             rotation: 0.9,
             scale: 0.1,

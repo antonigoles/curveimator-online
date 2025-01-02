@@ -2,14 +2,14 @@ import ProjectRepository from "../Repositories/ProjectRepository.ts";
 import {Project, ProjectObjectTypes} from "../Entities/Project.ts";
 import {ScreenRenderEngine} from "../../Render/ScreenRenderEngine.ts";
 import Bezier from "../Entities/Bezier.ts";
-import v2 from "../../Math/v2.tsx";
+import v2 from "../../Math/v2.ts";
 import {randomName} from "../../UI/utils.ts";
 import APIService from "../../Network/APIService.ts";
 import {UpdateResult} from "../DTO/UpdateResult.ts";
 import {EditorContextData} from "../../../contexts/EditorContext.tsx";
 import RenderableObject from "../../Render/RenderableObject.ts";
 import {ObjectInTime, Primitive} from "../../Render/ObjectInTime.ts";
-import Color from "../../Math/color.tsx";
+import Color from "../../Math/color.ts";
 import Shape from "../../Render/Shape.ts";
 
 export default class EditorService

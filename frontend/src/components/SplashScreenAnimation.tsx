@@ -1,6 +1,6 @@
 import {RefObject, useEffect, useRef} from "react";
-import v2 from "../core/Math/v2.tsx";
-import v3 from "../core/Math/v3.tsx";
+import v2 from "../core/Math/v2.ts";
+import v3 from "../core/Math/v3.ts";
 
 function animate(canvasRef: RefObject<HTMLCanvasElement>) {
     const triangles: { position: v3, speedBoost: number }[] = [];
@@ -41,8 +41,8 @@ function animate(canvasRef: RefObject<HTMLCanvasElement>) {
             const arrowTop = new v2(0, -(maxSize / (triangle.position.z/zRange)));
             center.y = center.y % (height + 2*arrowTop.length()) - arrowTop.length();
             const top = center.plus(arrowTop);
-            const rightCorner = center.plus(arrowTop.rotateBy(Math.PI * 2 / 3));
-            const leftCorner = center.plus(arrowTop.rotateBy(Math.PI * 4 / 3));
+            const rightCorner = center.plus(v2.rotateBy( arrowTop, Math.PI * 2 / 3));
+            const leftCorner = center.plus(v2.rotateBy( arrowTop, Math.PI * 4 / 3));
             ctx.moveTo(top.x, top.y);
             ctx.lineTo(rightCorner.x, rightCorner.y);
             ctx.lineTo(leftCorner.x, leftCorner.y);

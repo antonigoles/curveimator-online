@@ -1,5 +1,5 @@
 import Keyframe from './Keyframe.ts'
-import v2 from "../../Math/v2.tsx";
+import v2 from "../../Math/v2.ts";
 import KeyframeableProperty from "./KeyframeableProperty.ts";
 import RenderableObject from "../../Render/RenderableObject.ts";
 import {ObjectInTime} from "../../Render/ObjectInTime.ts";

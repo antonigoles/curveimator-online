@@ -9,6 +9,9 @@ interface CreateBezierPayload
     position?: number[];
     rotation?: number;
     scale?: number;
+    color?: number[];
+    strokeProgress?: number;
+    strokeThickness?: number;
 }
 
 export default class CreateBezier implements ProjectUpdate {
@@ -18,6 +21,9 @@ export default class CreateBezier implements ProjectUpdate {
     position?: number[];
     rotation?: number;
     scale?: number;
+    color?: number[];
+    strokeProgress?: number;
+    strokeThickness?: number;
 
     constructor(payload: CreateBezierPayload) {
         this.projectId = payload.projectId;
@@ -26,6 +32,9 @@ export default class CreateBezier implements ProjectUpdate {
         this.position = payload.position;
         this.rotation = payload.rotation;
         this.scale = payload.scale;
+        this.color = payload.color;
+        this.strokeProgress = payload.strokeProgress
+        this.strokeThickness = payload.strokeThickness;
     }
 
     async perform(): Promise<UpdateResult> {
@@ -33,7 +42,12 @@ export default class CreateBezier implements ProjectUpdate {
             projectId: this.projectId,
             name: this.name,
             type: 'bezier',
-            serializedData: this.controlPoints,
+            serializedData: {
+                controlPoints: this.controlPoints,
+                color: this.color ?? [255, 255, 255, 1],
+                strokeProgress: this.strokeProgress ?? 1,
+                strokeThickness: this.strokeThickness ?? 4
+            },
             position: this.position ?? [0,0],
             scale: this.scale ?? 1.0,
             rotation: this.rotation ?? 0.0,

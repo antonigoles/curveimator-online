@@ -3,7 +3,7 @@ import {useContext, useEffect, useRef, useState} from "react";
 import {editorService, screenRenderEngine} from "../../../core/DIContainer.tsx";
 import {EngineState} from "../../../core/Render/ScreenRenderEngine.ts";
 import {PlayArrow, Stop} from "@mui/icons-material";
-import v2 from "../../../core/Math/v2.tsx";
+import v2 from "../../../core/Math/v2.ts";
 import {EditorContext, EditorContextType, EditorTools} from "../../../contexts/EditorContext.tsx";
 import {angle} from "../../../core/Math/utils.ts";
 

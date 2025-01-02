@@ -1,5 +1,5 @@
-import v2 from "./v2.tsx";
-import VectorBase from "./vector.tsx";
+import v2 from "./v2.ts";
+import VectorBase from "./vector.ts";
 
 export default class v3 extends VectorBase<v3>
 {
