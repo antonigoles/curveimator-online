@@ -96,7 +96,7 @@ function TimeNeedle({ minPosition, maxPosition, height }: TimeNeedleParameters):
     let isDragging = false;
     let isMouseDown = false;
     let mouseOver = false;
-    let mouseOverOffTimer: number|null = null;
+    let mouseOverOffTimer: NodeJS.Timeout|null = null;
 
     function handleMoseMove(event: MouseEvent) {
         if ( dotRef.current ) {
@@ -125,7 +125,7 @@ function TimeNeedle({ minPosition, maxPosition, height }: TimeNeedleParameters):
                         timestampRef.current.style.display = 'flex';
                     }
                     const xNorm = Math.max(Math.min(maxPosition, event.clientX), minPosition) - minPosition;
-                    console.log(maxPosition, minPosition)
+                    // console.log(maxPosition, minPosition)
                     // console.log((xNorm/(maxPosition-minPosition)) * 60)
                     updateEditorContext({
                         previewTimestamp: (xNorm/(maxPosition-minPosition)) * 60

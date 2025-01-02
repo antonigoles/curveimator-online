@@ -28,7 +28,7 @@ export default class ProjectObject extends Model<InferAttributes<ProjectObject>,
     declare name: string;
 
     @Attribute(DataTypes.STRING)
-    declare type: string;
+    declare type: 'bezier';
 
     @Attribute(DataTypes.JSON)
     declare serializedData: object;

@@ -6,7 +6,7 @@ export type ProjectObjectTypes = Bezier
 export class Project {
     private readonly name: string;
     private readonly id: number;
-    private readonly projectObjects: ProjectObjectTypes[]
+    private projectObjects: ProjectObjectTypes[]
     private readonly projectObjectsMap: { [key: number]: ProjectObjectTypes } = {}
 
     constructor(id: number, name: string, projectObjects: ProjectObjectTypes[]) {
@@ -38,8 +38,8 @@ export class Project {
         return this.projectObjectsMap[id];
     }
 
-    addBezier(bezier: Bezier): void {
-        this.projectObjects.push(bezier);
+    updateObjects(objects: ProjectObjectTypes[]): void {
+        this.projectObjects = [...objects];
         this.rebuildProjectObjectsMap();
     }
 

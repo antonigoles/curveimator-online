@@ -122,6 +122,7 @@ export function Editor(): JSX.Element {
         updateEditorContext({
             project: project
         });
+        editorService.onEditorUpdate(updateEditorContext);
     }
 
     function updateEditorContext(editorContextData: Partial<EditorContextData>) {

@@ -1,6 +1,7 @@
 import ProjectResponse from "./Responses/ProjectResponse.ts";
 import APIError from "./Responses/APIError.ts";
 import {io, Socket} from "socket.io-client";
+import {UpdateResult} from "../Editor/DTO/UpdateResult.ts";
 
 export default class APIService
 {
@@ -68,7 +69,7 @@ export default class APIService
         })
     }
 
-    handleProjectUpdated(callback: (object: object) => void): void {
+    handleProjectUpdated(callback: (response: { source: string, result: UpdateResult }) => void): void {
         if(!this.socket || !this.socket.connected) throw new Error('Not connected');
         this.socket.on('project-updated', callback)
     }

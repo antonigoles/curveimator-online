@@ -57,6 +57,7 @@ io.on("connection", (socket) => {
         if (!project) return ack({ success: false, msg: "Project not found" })
 
         const validation = validateProjectUpdate(data);
+        console.log(validation)
         if (!validation.result) return ack({ success: false, msg: validation.message })
         let result;
         try {

@@ -170,7 +170,16 @@ export function validateUpdate(data: any): ValidatorResult
     if (!("type" in data.data)) return missingField('data.type');
     if (data.data.type === "bezier") return validateUpdateBezier(data);
     if (data.data.type === "keyframe") return validateUpdateKeyframe(data);
-    return validatorFinish('CreateObject');
+    return validatorFinish('validateUpdate');
+}
+
+export function validateDelete(data: any): ValidatorResult
+{
+    if (!("data" in data)) return missingField('data');
+    if (!("type" in data.data)) return missingField('data.type');
+    if (!("id" in data.data)) return missingField('data.id');
+    if (!['keyframe', 'bezier'].includes(data.data.type)) return incorrectType('data.type');
+    return validatorResult(true);
 }
 
 export function validateProjectUpdate(data: any): ValidatorResult
@@ -178,6 +187,7 @@ export function validateProjectUpdate(data: any): ValidatorResult
     if  (!("type" in data)) return missingField('type');
     if (data.type === "create") return validateCreate(data);
     if (data.type === "update") return validateUpdate(data);
-    return validatorFinish('CreateBezier');
+    if (data.type === "delete") return validateDelete(data);
+    return validatorFinish('validateProjectUpdate');
 }
 

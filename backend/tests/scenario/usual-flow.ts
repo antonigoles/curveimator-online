@@ -143,7 +143,18 @@ fn: async() => {
     const result2 = await waitForSocket<{ result: { objectId: number } }>(clientASocket, 'project-updated');
     writeTestLogs(result2);
 
-    // 6. Retrieve the project again and validate some fields just to make sure
+    // 6. Delete object and/or keyframe to test
+
+    clientBSocket.emitWithAck("project-update", {
+        projectId: projectId,
+        type: "delete",
+        data: {
+            type: 'bezier',
+            id: createdObjectId,
+        },
+    });
+    const result3 = await waitForSocket<{ result: { objectId: number } }>(clientASocket, 'project-updated');
+    writeTestLogs(result3);
 
     // X. USER B connection gets interrupted, meanwhile USER A adds another KEYFRAME to the OBJECT
     // X. USER B should signal synchronization issues

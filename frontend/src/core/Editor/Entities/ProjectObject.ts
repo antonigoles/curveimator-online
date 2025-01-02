@@ -70,6 +70,10 @@ export default abstract class ProjectObject implements RenderableObject {
         return this.name;
     }
 
+    setName(name: string): void {
+        this.name = name;
+    }
+
     getKeyframableProperties(): KeyframeableProperty[] {
         return this.keyframeableProperies;
     }
@@ -92,6 +96,10 @@ export default abstract class ProjectObject implements RenderableObject {
 
     getRotation(): number {
         return this.scale;
+    }
+
+    updateDataWith(object: ProjectObject) {
+        Object.assign(this, object);
     }
 
     abstract getObjectInTime(time: number): ObjectInTime;

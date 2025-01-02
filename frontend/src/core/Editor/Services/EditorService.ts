@@ -5,9 +5,12 @@ import Bezier from "../Entities/Bezier.ts";
 import v2 from "../../Math/v2.tsx";
 import {randomName} from "../../UI/utils.ts";
 import APIService from "../../Network/APIService.ts";
+import {UpdateResult} from "../DTO/UpdateResult.ts";
+import {EditorContextData} from "../../../contexts/EditorContext.tsx";
 
 export default class EditorService
 {
+    private onEditorUpdateCallbacks: ((editorContextData: Partial<EditorContextData>) => void)[] = []
     private selectedObjectId: number|null = null;
     private currentProject: Project|null = null;
     private projectRepository: ProjectRepository;
@@ -31,6 +34,7 @@ export default class EditorService
     private resendProjectToRenderer(): void
     {
         if(!this.currentProject) throw new Error("No project to send");
+        this.screenRenderEngine.clearRenderObjects();
         for (const object of this.currentProject.getObjects()) {
             this.addObjectToRenderer(object);
         }
@@ -41,18 +45,67 @@ export default class EditorService
         this.screenRenderEngine.addRenderableObject(object);
     }
 
+
     async changeProject(project: Project): Promise<void> {
         this.currentProject = project;
         this.resendProjectToRenderer();
         await this.apiService.connectSocket();
         await this.apiService.joinRoom({ projectId: project.getId() });
-        this.apiService.handleProjectUpdated(object => {
-            console.log(object)
+        this.apiService.handleProjectUpdated((response: { source: string, result: UpdateResult }) => {
+            if (response.result.objectType === 'bezier') {
+                const object = Bezier.fromProjectObjectResponse(response.result.newState);
+                switch (response.result.action) {
+                    case "create":
+                        this.createNewObjectLocal(object);
+                        break;
+                    case "update":
+                        this.updateObjectLocal(object);
+                        break;
+                    case "delete":
+                        this.deleteObjectLocal(object.getId());
+                        break;
+                }
+            }
         })
     }
 
-    async handleCreateBezier(data: object): Promise<void> {
-        throw new Error("Not implemented");
+    private createNewObjectLocal(object: ProjectObjectTypes): void {
+        if (!this.currentProject) throw new Error("No project loaded");
+        const objs = this.currentProject.getObjects();
+        objs.push(object);
+        this.currentProject.updateObjects(objs);
+        this.selectedObjectId = object.getId();
+        this.addObjectToRenderer(object);
+
+        // this should cause the UI list to update
+        this.callEditorUpdateCallbacks({
+            selectedObjectId: this.selectedObjectId,
+        });
+    }
+
+    private updateObjectLocal(object: ProjectObjectTypes): void {
+        if (!this.currentProject) throw new Error("No project loaded");
+        const objs = this.currentProject.getObjects();
+        const targetIndex = objs.findIndex(obj=>obj.getId() === object.getId());
+        if(targetIndex === -1) throw new Error("Index not in local array")
+        // objs[targetIndex] = object;
+        objs[targetIndex].updateDataWith(object);
+        // this.currentProject.updateObjects(objs);
+        this.callEditorUpdateCallbacks({});
+    }
+
+    private deleteObjectLocal(objectId: number): void {
+        if (!this.currentProject) throw new Error("No project loaded");
+        const objs = this.currentProject.getObjects();
+        const index = objs.findIndex(obj=>obj.getId() === objectId);
+        if(index === -1) throw new Error("Index not in local array")
+        objs.splice(index, 1);
+        this.currentProject.updateObjects(objs);
+        this.resendProjectToRenderer()
+        this.selectedObjectId = null;
+        this.callEditorUpdateCallbacks({
+            selectedObjectId: null
+        });
     }
 
     changeSelectedObjectId(selectedObjectId: number): void {
@@ -97,6 +150,34 @@ export default class EditorService
         })
     }
 
+    async updateObjectUniversal(object: ProjectObjectTypes): Promise<void> {
+        if(!this.currentProject) throw new Error('No current project');
+        await this.apiService.projectUpdate({
+            projectId: this.currentProject.getId(),
+            type: "update",
+            data: {
+                type: 'bezier',
+                id: object.getId(),
+                name: object.getName(),
+                position: object.getPosition(),
+                rotation: object.getRotation(),
+                scale: object.getScale(),
+            },
+        })
+    }
+
+    async deleteObjectUniversal(object: ProjectObjectTypes): Promise<void> {
+        if(!this.currentProject) throw new Error('No current project');
+        await this.apiService.projectUpdate({
+            projectId: this.currentProject.getId(),
+            type: "delete",
+            data: {
+                type: object.getType(),
+                id: object.getId(),
+            },
+        })
+    }
+
     async createNewBezier(startingPosition: v2): Promise<void> {
         if(!this.currentProject) throw new Error('No current project');
         await this.apiService.projectUpdate({
@@ -115,5 +196,15 @@ export default class EditorService
 
     async getProjectById(id: number): Promise<Project> {
         return await this.projectRepository.getById(id);
+    }
+
+    onEditorUpdate(callback: (editorContextData: Partial<EditorContextData>) => void): void {
+        this.onEditorUpdateCallbacks.push(callback);
+    }
+
+    private callEditorUpdateCallbacks(editorContextData: Partial<EditorContextData>): void {
+        for ( const cb of this.onEditorUpdateCallbacks ) {
+            cb(editorContextData);
+        }
     }
 }

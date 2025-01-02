@@ -3,6 +3,8 @@ import {ProjectUpdate} from "./ProjectUpdate.ts";
 import CreateKeyframe from "./CreateKeyframe.ts";
 import UpdateKeyframe from "./UpdateKeyframe.ts";
 import UpdateBezier from "./UpdateBezier.ts";
+import DeleteObject from "./DeleteObject.ts";
+import DeleteKeyframe from "./DeleteKeyframe.ts";
 
 interface CreatePayload {
     type: 'create'
@@ -38,6 +40,14 @@ interface UpdatePayload {
         propertyPath?: string,
         time?: number,
         value?: number
+    }
+}
+
+interface DeletePayload {
+    type: 'delete'
+    data: {
+        type: 'bezier' | 'keyframe',
+        id: number,
     }
 }
 
@@ -93,12 +103,31 @@ export default class ProjectUpdateFactory {
         throw new Error('Incorrect payload passed to the factory')
     }
 
+    private static deleteActionFromPayload(
+        payload: ProjectUpdatePayload<DeletePayload>
+    ): ProjectUpdate {
+        if ( payload.data.type === 'bezier' ) {
+            return new DeleteObject({
+                objectId: payload.data.id
+            });
+        }
+
+        if ( payload.data.type === 'keyframe' ) {
+            return new DeleteKeyframe({
+                objectId: payload.data.id,
+            });
+        }
+
+        throw new Error('Incorrect payload passed to the factory')
+    }
+
     public static fromPayload(
-        payload: ProjectUpdatePayload<UpdatePayload|CreatePayload>
+        payload: ProjectUpdatePayload<UpdatePayload|CreatePayload|DeletePayload>
     ): ProjectUpdate {
         // Assume data has been verified
         if (payload.type === 'create') return this.createActionFromPayload(payload);
         if (payload.type === 'update') return this.updateActionFromPayload(payload);
+        if (payload.type === 'delete') return this.deleteActionFromPayload(payload);
         throw new Error('Incorrect payload passed to the factory')
     }
 }

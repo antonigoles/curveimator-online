@@ -56,6 +56,11 @@ export class ScreenRenderEngine {
         this.renderableObjects.push(object);
     }
 
+    clearRenderObjects(): void
+    {
+        this.renderableObjects = [];
+    }
+
     setProgress(time: number) {
         this.currentFrameEditorTime = time;
     }
