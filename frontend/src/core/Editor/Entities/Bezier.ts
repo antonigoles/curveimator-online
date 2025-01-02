@@ -3,7 +3,7 @@ import v2 from "../../Math/v2.tsx";
 import ProjectObject from "./ProjectObject.ts";
 import Keyframe from "./Keyframe.ts";
 import KeyframeableProperty from "./KeyframeableProperty.ts";
-import ObjectInTime from "../../Render/ObjectInTime.ts";
+import {ObjectInTime} from "../../Render/ObjectInTime.ts";
 import Color from "../../Math/color.tsx";
 
 export default class Bezier extends ProjectObject {
@@ -62,7 +62,7 @@ export default class Bezier extends ProjectObject {
     }
 
     baseCurve(): v2[] {
-        const PRECISION = 50; // PRECISION stops between control points
+        const PRECISION = 120; // PRECISION stops between control points
         const result: v2[] = [];
         for ( let t = 0; t <= 1; t+= 1/PRECISION ) {
             let pt = this.controlPoints[this.controlPoints.length-1];
@@ -78,12 +78,15 @@ export default class Bezier extends ProjectObject {
         return this.controlPoints;
     }
 
-    getObjectInTime(time: number): ObjectInTime {
+    getObjectInTime(): ObjectInTime {
         // TODO: Calculate Bezier
         return {
-            lines: [this.baseCurve()],
-            lineThickness: 4,
-            color: new Color(255,255,255,1)
+            primitivesToRender: [{
+                type: 'Shape',
+                points: this.baseCurve(),
+                strokeThickness: 4,
+                strokeColor: new Color(255,255,255,1)
+            }],
         };
     }
 

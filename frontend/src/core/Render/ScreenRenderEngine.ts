@@ -1,6 +1,8 @@
 import RenderableObject from "./RenderableObject.ts";
-import v2 from "../Math/v2.tsx";
 import Color from "../Math/color.tsx";
+import Arc from "./Arc.ts";
+import Shape from "./Shape.ts";
+import {Primitive} from "./ObjectInTime.ts";
 
 export enum EngineState {
     WAITING_FOR_INJECT = 0,
@@ -16,8 +18,9 @@ export class ScreenRenderEngine {
 
     private engineState = EngineState.WAITING_FOR_INJECT;
 
-    private backgroundColor: string = `rgb(0, 0, 0)`;
+    private backgroundColor: Color = new Color(0, 0, 0, 1);
 
+    // @ts-ignore
     private lastFrameEditorTime: number = 0;
     private currentFrameEditorTime: number = 0;
 
@@ -47,8 +50,13 @@ export class ScreenRenderEngine {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
         // draw background
-        this.ctx.fillStyle = this.backgroundColor;
+        this.ctx.fillStyle = this.backgroundColor.toString();
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    }
+
+    addToRenderQueue(cb: (ctx: CanvasRenderingContext2D) => void): void
+    {
+        this.renderCallbackQueue.push(cb);
     }
 
     addRenderableObject(object: RenderableObject): void
@@ -65,18 +73,51 @@ export class ScreenRenderEngine {
         this.currentFrameEditorTime = time;
     }
 
-    private drawLines(lines: v2[][], thickness: number, color: Color): void  {
+    private drawPrimitives(objects: Primitive[]): void  {
         if(!this.ctx) throw new Error('Missing context error');
         if(!this.canvas) throw new Error('Missing canvas ref')
-        this.ctx.beginPath();
-        for (const line of lines) {
-            this.ctx.moveTo(line[0].x, line[0].y);
-            for ( let i = 1; i<line.length; i++ ) {
-                this.ctx.lineTo((line[i].x/this.canvas.width)*1280, (line[i].y/this.canvas.height)*720);
+        for (const object of objects) {
+            if(object.type === 'Shape') {
+                const shape = object as Shape;
+                this.ctx.beginPath();
+                this.ctx.moveTo(shape.points[0].x, shape.points[0].y);
+                for ( let i = 1; i<shape.points.length; i++ ) {
+                    this.ctx.lineTo((shape.points[i].x/this.canvas.width)*1280, (shape.points[i].y/this.canvas.height)*720);
+                }
+                if (shape.dashedLine) {
+                    this.ctx.setLineDash(shape.dashedLine)
+                } else {
+                    this.ctx.setLineDash([])
+                }
+
+                if (shape.strokeColor) {
+                    this.ctx.strokeStyle = shape.strokeColor.toString();
+                    this.ctx.lineWidth = shape.strokeThickness
+                    this.ctx.stroke();
+                }
+
+                if (shape.fillColor) {
+                    this.ctx.fillStyle = shape.fillColor.toString();
+                    this.ctx.fill();
+                }
+                this.ctx.closePath();
+            } else {
+                const arc = object as Arc;
+                this.ctx.beginPath();
+                this.ctx.arc(arc.center.x, arc.center.y, arc.radius, 0, arc.angle);
+
+                if (arc.strokeColor) {
+                    this.ctx.strokeStyle = arc.strokeColor.toString();
+                    this.ctx.lineWidth = arc.strokeThickness
+                    this.ctx.stroke();
+                }
+
+                if (arc.fillColor) {
+                    this.ctx.fillStyle = arc.fillColor.toString();
+                    this.ctx.fill();
+                }
+                this.ctx.closePath();
             }
-            this.ctx.strokeStyle = color.toString();
-            this.ctx.lineWidth = thickness;
-            this.ctx.stroke();
         }
     }
 
@@ -86,7 +127,7 @@ export class ScreenRenderEngine {
         for (const renderable of this.renderableObjects) {
             // TODO: I need to implement some frame buffering
             const obj = renderable.getObjectInTime(this.currentFrameEditorTime);
-            this.drawLines(obj.lines, obj.lineThickness, obj.color);
+            this.drawPrimitives(obj.primitivesToRender)
         }
         this.lastFrameEditorTime = this.currentFrameEditorTime;
         for ( const cb of this.renderCallbackQueue) {

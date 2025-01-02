@@ -1,5 +1,5 @@
-import ObjectInTime from "./ObjectInTime.ts";
+import {ObjectInTime} from "./ObjectInTime.ts";
 
 export default interface RenderableObject {
-    getObjectInTime(time: number): ObjectInTime
+    getObjectInTime(time?: number): ObjectInTime
 }

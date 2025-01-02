@@ -1,8 +1,8 @@
-import v2 from "../Math/v2.tsx";
-import color from "../Math/color.tsx";
+import Shape from "./Shape.ts";
+import Arc from "./Arc.ts";
 
-export default interface ObjectInTime {
-    lines: v2[][];
-    lineThickness: number,
-    color: color
+export type Primitive = (({type: 'Arc'} & Arc) | ({type: 'Shape'} & Shape))
+
+export type ObjectInTime = {
+    primitivesToRender: Primitive[]
 }

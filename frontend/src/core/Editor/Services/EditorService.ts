@@ -7,9 +7,16 @@ import {randomName} from "../../UI/utils.ts";
 import APIService from "../../Network/APIService.ts";
 import {UpdateResult} from "../DTO/UpdateResult.ts";
 import {EditorContextData} from "../../../contexts/EditorContext.tsx";
+import RenderableObject from "../../Render/RenderableObject.ts";
+import {ObjectInTime, Primitive} from "../../Render/ObjectInTime.ts";
+import Color from "../../Math/color.tsx";
+import Shape from "../../Render/Shape.ts";
 
 export default class EditorService
 {
+    private selectionObject: RenderableObject = {
+        getObjectInTime: this.renderUISelectionObject.bind(this)
+    }
     private onEditorUpdateCallbacks: ((editorContextData: Partial<EditorContextData>) => void)[] = []
     private selectedObjectId: number|null = null;
     private currentProject: Project|null = null;
@@ -31,20 +38,68 @@ export default class EditorService
         return this.currentProject;
     }
 
-    private resendProjectToRenderer(): void
-    {
+    private resendProjectToRenderer(): void {
         if(!this.currentProject) throw new Error("No project to send");
         this.screenRenderEngine.clearRenderObjects();
         for (const object of this.currentProject.getObjects()) {
             this.addObjectToRenderer(object);
         }
+        this.addObjectToRenderer(this.selectionObject);
     }
 
-    private addObjectToRenderer(object: ProjectObjectTypes): void
-    {
+    private renderUISelectionObject(): ObjectInTime {
+        const selectedObject = this.getSelectedObject();
+        const primitivesToRender: Primitive[] = [];
+        const padding = 12;
+        if (selectedObject) {
+            let minX = 4096, minY = 4096, maxX = 0, maxY = 0;
+            for (const cp of selectedObject.getControlPoints()) {
+                minX = Math.min(minX, cp.x);
+                minY = Math.min(minY, cp.y);
+                maxX = Math.max(maxX, cp.x);
+                maxY = Math.max(maxY, cp.y);
+            }
+            const shape: {type: 'Shape'} & Shape = {
+                type: 'Shape',
+                points: [
+                    new v2(minX - padding, minY - padding),
+                    new v2(maxX + padding, minY - padding),
+                    new v2(maxX + padding, maxY + padding),
+                    new v2(minX - padding, maxY + padding),
+                    new v2(minX - padding, minY - padding)
+                ],
+                strokeThickness: 1,
+                strokeColor: new Color(255, 255, 255, 1),
+                dashedLine: [15, 5]
+            }
+
+            primitivesToRender.push(shape);
+
+            for ( let i = 0; i<4; i++ ) {
+                primitivesToRender.push({
+                    type: "Arc",
+                    center: shape.points[i],
+                    radius: 6,
+                    strokeThickness: 0,
+                    fillColor: new Color(250, 201, 52, 1),
+                    angle: 2 * Math.PI
+                });
+            }
+
+
+            return {
+                primitivesToRender
+            }
+        }
+
+        return {
+            primitivesToRender: []
+        }
+    }
+
+    private addObjectToRenderer(object: RenderableObject): void {
         this.screenRenderEngine.addRenderableObject(object);
     }
-
 
     async changeProject(project: Project): Promise<void> {
         this.currentProject = project;
