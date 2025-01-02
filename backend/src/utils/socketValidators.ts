@@ -40,18 +40,18 @@ export function validateCreateBezier(data: any): ValidatorResult
     if (typeof data.data.name !== 'string') return incorrectType('data.name');
     if (!("controlPoints" in data.data)) return missingField('data.controlPoints');
 
-    if("position" in data) {
-        if ((data.data.position instanceof Array)) return incorrectType('data.position');
+    if("position" in data.data) {
+        if (!(data.data.position instanceof Array)) return incorrectType('data.position');
         if (data.data.position.length !== 2) return wrongSize('data.position');
         if (isNaN(data.data.position[0])) return incorrectType('data.position[0]');
         if (isNaN(data.data.position[1])) return incorrectType('data.position[1]')
     }
 
-    if("scale" in data) {
+    if("scale" in data.data) {
         if (isNaN(data.data.scale)) return incorrectType('data.scale');
     }
 
-    if("rotation" in data) {
+    if("rotation" in data.data) {
         if (isNaN(data.data.rotation)) return incorrectType('data.rotation');
     }
 

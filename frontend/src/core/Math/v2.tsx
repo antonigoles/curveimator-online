@@ -7,10 +7,10 @@ export default class v2 extends VectorBase<v2>
         super([x,y]);
     }
 
-    public rotateBy(angle: number): v2 {
+    public static rotateBy(v: v2, angle: number): v2 {
         return new v2(
-            this.x * Math.cos(angle) - this.y * Math.sin(angle),
-            this.x * Math.sin(angle) + this.y * Math.cos(angle)
+            v.x * Math.cos(angle) - v.y * Math.sin(angle),
+            v.x * Math.sin(angle) + v.y * Math.cos(angle)
         );
     }
 }

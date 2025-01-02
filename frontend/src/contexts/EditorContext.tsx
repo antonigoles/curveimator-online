@@ -5,6 +5,9 @@ import {randomName} from "../core/UI/utils.ts";
 export enum EditorTools {
     Select = 0,
     Bezier = 1,
+    Transform = 2,
+    Rotate = 3,
+    Scale = 4
 }
 
 export type EditorContextData = {

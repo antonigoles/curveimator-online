@@ -1,7 +1,7 @@
 import ComponentWithDimensions from "../../ParameterTypes/ComponentWithDimensions.ts";
 import {useContext, useState} from "react";
 import {EditorContext, EditorContextType, EditorTools} from "../../../contexts/EditorContext.tsx";
-import {Draw, PanToolAlt} from "@mui/icons-material";
+import {Draw, OpenWith, PanToolAlt, PhotoSizeSelectSmall, ThreeSixty} from "@mui/icons-material";
 import {editorService} from "../../../core/DIContainer.tsx";
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
@@ -122,13 +122,25 @@ function ToolList(): JSX.Element {
             icon: PanToolAlt,
         },
         {
+            tool: EditorTools.Transform,
+            icon: OpenWith,
+        },
+        {
+            tool: EditorTools.Rotate,
+            icon: ThreeSixty,
+        },
+        {
+            tool: EditorTools.Scale,
+            icon: PhotoSizeSelectSmall,
+        },
+        {
             tool: EditorTools.Bezier,
             icon: Draw,
         }
     ]
 
     return (
-        <div className={'w-full p-2 flex flex-row justify-end border-b-2 border-lightGray h-[9%]'}>
+        <div className={'w-full p-2 flex flex-row justify-center border-b-2 border-lightGray flex-wrap '}>
             {tools.map(
                 tool =>
                     (

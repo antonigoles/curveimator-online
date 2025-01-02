@@ -20,9 +20,12 @@ export default class EditorService
     private onEditorUpdateCallbacks: ((editorContextData: Partial<EditorContextData>) => void)[] = []
     private selectedObjectId: number|null = null;
     private currentProject: Project|null = null;
+    private syncTimeoutMap: {[key: number]: NodeJS.Timeout|null} = {};
+
     private projectRepository: ProjectRepository;
     private screenRenderEngine: ScreenRenderEngine;
     private apiService: APIService;
+
 
     constructor(
         projectRepository: ProjectRepository,
@@ -53,7 +56,7 @@ export default class EditorService
         const padding = 12;
         if (selectedObject) {
             let minX = 4096, minY = 4096, maxX = 0, maxY = 0;
-            for (const cp of selectedObject.getControlPoints()) {
+            for (const cp of selectedObject.getBoundaryPolygon()) {
                 minX = Math.min(minX, cp.x);
                 minY = Math.min(minY, cp.y);
                 maxX = Math.max(maxX, cp.x);
@@ -86,6 +89,14 @@ export default class EditorService
                 });
             }
 
+            primitivesToRender.push({
+                type: "Arc",
+                center: selectedObject.getMassCenter().plus(selectedObject.getPosition()),
+                radius: 6,
+                strokeThickness: 0,
+                fillColor: new Color(240, 10, 10, 1),
+                angle: 2 * Math.PI
+            })
 
             return {
                 primitivesToRender
@@ -95,6 +106,19 @@ export default class EditorService
         return {
             primitivesToRender: []
         }
+    }
+
+    public resolveObjectIdsFromV2(position: v2): number[] {
+        if(!this.currentProject) throw new Error('No project loaded')
+        const objects = this.currentProject.getObjects();
+        const resolved = [];
+        for ( const object of objects ) {
+            // we assume these points are sorted by angle towards the middle (required by the Domain)
+            if(object.positionInsideObjectBoundaryPolygon(position)) {
+                resolved.push(object.getId())
+            }
+        }
+        return resolved;
     }
 
     private addObjectToRenderer(object: RenderableObject): void {
@@ -109,6 +133,7 @@ export default class EditorService
         this.apiService.handleProjectUpdated((response: { source: string, result: UpdateResult }) => {
             if (response.result.objectType === 'bezier') {
                 const object = Bezier.fromProjectObjectResponse(response.result.newState);
+                // console.log(object)
                 switch (response.result.action) {
                     case "create":
                         this.createNewObjectLocal(object);
@@ -122,6 +147,47 @@ export default class EditorService
                 }
             }
         })
+    }
+
+    private waitForTimeToSyncObject(object: ProjectObjectTypes, time: number): void {
+        if (object.getId() in this.syncTimeoutMap) {
+            const timeout = this.syncTimeoutMap[object.getId()]
+            if(timeout) clearTimeout(timeout);
+        }
+        this.syncTimeoutMap[object.getId()] = setTimeout(() => {
+            this.updateObjectUniversal(object);
+            this.syncTimeoutMap[object.getId()] = null;
+        }, time)
+    }
+
+    moveObjectTo(objectId: number, position: v2): void {
+        if (!this.currentProject) throw new Error('No project loaded')
+        const target = this.currentProject.getObjectById(objectId);
+        if(!target) throw new Error(`Object with id ${objectId} does not exit`)
+        target.setPosition(position);
+
+        // make the server react after some time
+        this.waitForTimeToSyncObject(target, 200);
+    }
+
+    rotateObjectTo(objectId: number, rotation: number): void {
+        if (!this.currentProject) throw new Error('No project loaded')
+        const target = this.currentProject.getObjectById(objectId);
+        if(!target) throw new Error(`Object with id ${objectId} does not exit`)
+        target.setRotation(rotation);
+
+        // make the server react after some time
+        this.waitForTimeToSyncObject(target, 200);
+    }
+
+    scaleObjectTo(objectId: number, scale: number): void {
+        if (!this.currentProject) throw new Error('No project loaded')
+        const target = this.currentProject.getObjectById(objectId);
+        if(!target) throw new Error(`Object with id ${objectId} does not exit`)
+        target.setScale(scale);
+
+        // make the server react after some time
+        this.waitForTimeToSyncObject(target, 200);
     }
 
     private createNewObjectLocal(object: ProjectObjectTypes): void {
@@ -139,6 +205,7 @@ export default class EditorService
     }
 
     private updateObjectLocal(object: ProjectObjectTypes): void {
+        // console.log(object.getPosition().toString())
         if (!this.currentProject) throw new Error("No project loaded");
         const objs = this.currentProject.getObjects();
         const targetIndex = objs.findIndex(obj=>obj.getId() === object.getId());
@@ -198,7 +265,7 @@ export default class EditorService
                 id: bezier.getId(),
                 name: bezier.getName(),
                 controlPoints: bezier.getControlPoints().map( e => e.values ),
-                position: bezier.getPosition(),
+                position: bezier.getPosition().values,
                 rotation: bezier.getRotation(),
                 scale: bezier.getScale(),
             },
@@ -211,10 +278,10 @@ export default class EditorService
             projectId: this.currentProject.getId(),
             type: "update",
             data: {
-                type: 'bezier',
+                type: object.getType(),
                 id: object.getId(),
                 name: object.getName(),
-                position: object.getPosition(),
+                position: object.getPosition().values,
                 rotation: object.getRotation(),
                 scale: object.getScale(),
             },
@@ -241,7 +308,7 @@ export default class EditorService
             data: {
                 type: 'bezier',
                 controlPoints: [startingPosition.values],
-                position: startingPosition.values,
+                position: [0,0],
                 rotation: 0,
                 scale: 1,
                 name: randomName()

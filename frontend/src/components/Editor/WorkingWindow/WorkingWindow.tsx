@@ -5,6 +5,7 @@ import {EngineState} from "../../../core/Render/ScreenRenderEngine.ts";
 import {PlayArrow, Stop} from "@mui/icons-material";
 import v2 from "../../../core/Math/v2.tsx";
 import {EditorContext, EditorContextType, EditorTools} from "../../../contexts/EditorContext.tsx";
+import {angle} from "../../../core/Math/utils.ts";
 
 
 export default function WorkingWindow({width, height}: ComponentWithDimensions): JSX.Element {
@@ -21,6 +22,84 @@ export default function WorkingWindow({width, height}: ComponentWithDimensions):
     const [isPlaying, setPlaying] = useState<boolean>(false);
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
+    let isMouseDown = false;
+    let hasGrabbed = false
+    let beginGrabPosition: v2|null = null;
+    let beginGrabObjectPosition: v2|null = null;
+    let beginGrabObjectRotation = 0;
+
+    function handleMouseDown(event: MouseEvent) {
+        isMouseDown = true;
+    }
+
+    function handleMouseUp(event: MouseEvent) {
+        isMouseDown = false;
+        hasGrabbed = false;
+        beginGrabPosition = null;
+        beginGrabObjectPosition = null;
+        beginGrabObjectRotation = 0;
+    }
+
+    function handleMouseMove(event: MouseEvent) {
+        if(!isMouseDown) return;
+        if(!event.target) return;
+        if(!(event.target instanceof HTMLElement)) return;
+
+        // scale to 1280x720
+        const rect = event.target.getBoundingClientRect();
+        const position = new v2((event.offsetX/rect.width)*1280, (event.offsetY/rect.height)*720);
+        const selected = editorService.getSelectedObject();
+        if(!selected) return;
+
+        if (editorContextData.currentTool === EditorTools.Transform) {
+            if (!hasGrabbed && selected.positionInsideObjectBoundarySquare(position)) {
+                beginGrabPosition = position;
+                beginGrabObjectPosition = selected.getPosition();
+                hasGrabbed = true;
+            } else if (hasGrabbed && beginGrabPosition && beginGrabObjectPosition) {
+                const nextPosition = beginGrabObjectPosition.plus(position).minus(beginGrabPosition);
+                editorService.moveObjectTo(selected.getId(), nextPosition);
+                return;
+            }
+        }
+
+        if (editorContextData.currentTool === EditorTools.Rotate) {
+            if(!hasGrabbed) {
+                beginGrabPosition = position;
+                beginGrabObjectRotation = selected.getRotation()
+                hasGrabbed = true;
+            } else if (hasGrabbed && beginGrabPosition && (!isNaN(beginGrabObjectRotation))) {
+                const center: v2 = selected.getMassCenter().plus(selected.getPosition());
+                const rot = beginGrabObjectRotation + angle(
+                    beginGrabPosition.minus(center),
+                    position.minus(center)
+                );
+                editorService.rotateObjectTo(selected.getId(), rot);
+                return;
+            }
+        }
+
+        if (editorContextData.currentTool === EditorTools.Scale) {
+            if (!hasGrabbed && selected.positionInsideObjectBoundarySquare(position)) {
+                beginGrabPosition = position;
+                beginGrabObjectPosition = selected.getPosition();
+                hasGrabbed = true;
+            } else if (hasGrabbed && beginGrabPosition && beginGrabObjectPosition) {
+                const scaleBy = beginGrabObjectPosition.minus(position).length()
+                editorService.scaleObjectTo(selected.getId(), selected.getScale() * scaleBy);
+                return;
+            }
+        }
+
+        // if (editorContextData.currentTool === EditorTools.Select) {
+        //     if (!hasGrabbed && selected.positionInsideObjectBoundarySquare(position)) {
+        //         beginGrabPosition = position;
+        //         beginGrabObjectPosition = selected.getPosition();
+        //         hasGrabbed = true;
+        //     }
+        // }
+    }
+
     function handleWindowClick(event: MouseEvent) {
         if(!event.target) return;
         if(!(event.target instanceof HTMLElement)) return;
@@ -29,11 +108,21 @@ export default function WorkingWindow({width, height}: ComponentWithDimensions):
         const rect = event.target.getBoundingClientRect();
         const position = new v2((event.offsetX/rect.width)*1280, (event.offsetY/rect.height)*720);
         if (editorContextData.currentTool === EditorTools.Select) {
-            // default behaviour if you randomly click on the background
-            editorService.unselectObject()
-            updateEditorContext({
-                selectedObjectId: null
-            })
+            const selected = editorService.getSelectedObject();
+            if(selected && selected.positionInsideObjectBoundarySquare(position)) return;
+            const resolved = editorService.resolveObjectIdsFromV2(position);
+            if(resolved[0]) {
+                editorService.changeSelectedObjectId(resolved[0])
+                updateEditorContext({
+                    selectedObjectId: resolved[0]
+                })
+            } else {
+                // default behaviour if you randomly click on the background
+                editorService.unselectObject()
+                updateEditorContext({
+                    selectedObjectId: null
+                })
+            }
         }
 
         if (editorContextData.currentTool === EditorTools.Bezier) {
@@ -59,6 +148,11 @@ export default function WorkingWindow({width, height}: ComponentWithDimensions):
 
             // init events
             refCopy.addEventListener("click", handleWindowClick)
+            refCopy.addEventListener("mouseup", handleMouseUp)
+            refCopy.addEventListener("mouseleave", handleMouseUp)
+            refCopy.addEventListener("mouseout", handleMouseUp)
+            refCopy.addEventListener("mousedown", handleMouseDown)
+            refCopy.addEventListener("mousemove", handleMouseMove)
         } else {
             setLoading(true);
         }
@@ -66,6 +160,11 @@ export default function WorkingWindow({width, height}: ComponentWithDimensions):
         return () => {
             if (refCopy) {
                 refCopy.removeEventListener("click", handleWindowClick)
+                refCopy.removeEventListener("mouseup", handleMouseUp)
+                refCopy.removeEventListener("mouseleave", handleMouseUp)
+                refCopy.removeEventListener("mouseout", handleMouseUp)
+                refCopy.removeEventListener("mousedown", handleMouseDown)
+                refCopy.removeEventListener("mousemove", handleMouseMove)
             }
         }
     }, [canvasRef, editorContextData, canvasHeight, canvasWidth]);

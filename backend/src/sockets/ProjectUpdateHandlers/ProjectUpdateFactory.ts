@@ -64,7 +64,10 @@ export default class ProjectUpdateFactory {
             return new CreateBezier({
                 projectId: payload.projectId,
                 controlPoints: payload.data.controlPoints,
-                name: payload.data.name
+                name: payload.data.name,
+                position: payload.data.position,
+                scale: payload.data.scale,
+                rotation: payload.data.rotation,
             });
         }
 
@@ -87,7 +90,10 @@ export default class ProjectUpdateFactory {
             return new UpdateBezier({
                 id: payload.data.id,
                 controlPoints: payload.data.controlPoints,
-                name: payload.data.name
+                name: payload.data.name,
+                position: payload.data.position,
+                scale: payload.data.scale,
+                rotation: payload.data.rotation,
             });
         }
 

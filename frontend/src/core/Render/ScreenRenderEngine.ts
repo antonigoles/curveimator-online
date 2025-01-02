@@ -26,7 +26,7 @@ export class ScreenRenderEngine {
 
     constructor() {
         this.renderLoop = this.renderLoop.bind(this);
-        this.renderLoop()
+        requestAnimationFrame(this.renderLoop)
     }
 
     injectCanvas(canvas: HTMLCanvasElement) {
@@ -121,9 +121,10 @@ export class ScreenRenderEngine {
         }
     }
 
-    private renderLoop(): number {
+    private renderLoop(frameTime: number): number {
         if (!this.ctx) return requestAnimationFrame(this.renderLoop);
         this.preProcessScene();
+        this.currentFrameEditorTime = frameTime
         for (const renderable of this.renderableObjects) {
             // TODO: I need to implement some frame buffering
             const obj = renderable.getObjectInTime(this.currentFrameEditorTime);

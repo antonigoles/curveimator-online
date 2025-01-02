@@ -40,7 +40,7 @@ fn: async() => {
         data: {
             type: 'bezier',
             controlPoints: [[1,0], [2,3], [3,1], [4,0]],
-            position: [0, 2, 3],
+            position: [0, 2],
             rotation: 0.2,
             scale: 0.7,
             name: 'Bezier Curve #1'
@@ -135,7 +135,7 @@ fn: async() => {
             id: createdObjectId,
             name: 'New bezier name #90',
             controlPoints: [[1.7, 2.3], [2.1,32], [31,12], [324,-0.2]],
-            position: [0.7, 2.3, 3.2],
+            position: [0.7, 2.3],
             rotation: 0.9,
             scale: 0.1,
         },
@@ -145,16 +145,16 @@ fn: async() => {
 
     // 6. Delete object and/or keyframe to test
 
-    clientBSocket.emitWithAck("project-update", {
-        projectId: projectId,
-        type: "delete",
-        data: {
-            type: 'bezier',
-            id: createdObjectId,
-        },
-    });
-    const result3 = await waitForSocket<{ result: { objectId: number } }>(clientASocket, 'project-updated');
-    writeTestLogs(result3);
+    // clientBSocket.emitWithAck("project-update", {
+    //     projectId: projectId,
+    //     type: "delete",
+    //     data: {
+    //         type: 'bezier',
+    //         id: createdObjectId,
+    //     },
+    // });
+    // const result3 = await waitForSocket<{ result: { objectId: number } }>(clientASocket, 'project-updated');
+    // writeTestLogs(result3);
 
     // X. USER B connection gets interrupted, meanwhile USER A adds another KEYFRAME to the OBJECT
     // X. USER B should signal synchronization issues

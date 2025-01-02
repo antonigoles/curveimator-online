@@ -34,7 +34,7 @@ export default class ProjectObject extends Model<InferAttributes<ProjectObject>,
     declare serializedData: object;
 
     @Attribute(DataTypes.JSON)
-    @Default([0,0,0])
+    @Default([0,0])
     declare position: object;
 
     @Attribute(DataTypes.FLOAT)
