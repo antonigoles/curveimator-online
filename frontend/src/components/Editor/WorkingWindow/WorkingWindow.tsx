@@ -80,6 +80,7 @@ export default function WorkingWindow({width, height}: ComponentWithDimensions):
                     position.minus(center)
                 );
                 editorService.rotateObjectTo(selected.getId(), rot);
+                editorService.insertKeyframe(selected.getId(), 'r', rot, editorContextData.previewTimestamp);
                 return;
             }
         }
@@ -92,6 +93,7 @@ export default function WorkingWindow({width, height}: ComponentWithDimensions):
             } else if (hasGrabbed && beginGrabPosition && beginGrabObjectPosition) {
                 const scaleBy = beginGrabObjectPosition.minus(position).length()
                 editorService.scaleObjectTo(selected.getId(), selected.getScale() * scaleBy);
+                // editorService.insertKeyframe(selected.getId(), 's', nextPosition.x, editorContextData.previewTimestamp);
                 return;
             }
         }

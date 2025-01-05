@@ -37,6 +37,12 @@ export default class Keyframe {
         return this.time;
     }
 
+
+    // warning: this update requires keyframe rebuilding
+    public setTime(time: number): void {
+        this.time = time;
+    }
+
     public getValue(): number {
         return this.value;
     }

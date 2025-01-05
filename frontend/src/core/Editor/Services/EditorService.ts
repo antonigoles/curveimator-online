@@ -12,6 +12,7 @@ import {ObjectInTime, Primitive} from "../../Render/ObjectInTime.ts";
 import Color from "../../Math/color.ts";
 import Shape from "../../Render/Shape.ts";
 import Keyframe from "../Entities/Keyframe.ts";
+import {editorService} from "../../DIContainer.tsx";
 
 export default class EditorService
 {
@@ -42,6 +43,10 @@ export default class EditorService
         this.projectRepository = projectRepository;
         this.screenRenderEngine = screenRenderEngine;
         this.apiService = apiService;
+    }
+
+    refreshEditor(): void {
+        this.setPlayback(this.autoPlaybackProgress)
     }
 
     isExporting(): boolean {
@@ -268,9 +273,14 @@ export default class EditorService
                         this.callEditorUpdateCallbacks({
                             selectedObjectId: this.selectedObjectId,
                         });
+                        editorService.refreshEditor();
                         break;
                     case "update":
-                        throw new Error('Keyframe update handler not implemented')
+                        targetObject.updateKeyframe(keyframe);
+                        this.callEditorUpdateCallbacks({
+                            selectedObjectId: this.selectedObjectId,
+                        });
+                        editorService.refreshEditor();
                         break;
                     case "delete":
                         throw new Error('Keyframe delete handler not implemented')
@@ -437,6 +447,21 @@ export default class EditorService
                 propertyPath: path,
                 time: time,
                 value: value,
+            },
+        })
+    }
+
+    async updateKeyframe(keyframe: Keyframe): Promise<void> {
+        if(!this.currentProject) throw new Error('No current project');
+        await this.apiService.projectUpdate({
+            projectId: this.currentProject.getId(),
+            type: "update",
+            data: {
+                type: 'keyframe',
+                id: keyframe.getId(),
+                propertyPath: keyframe.getPropertyPath(),
+                time: keyframe.getTime(),
+                value: keyframe.getValue(),
             },
         })
     }

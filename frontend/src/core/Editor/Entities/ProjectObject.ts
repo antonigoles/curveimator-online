@@ -44,6 +44,8 @@ export default abstract class ProjectObject implements RenderableObject {
 
     protected abstract insertKeyframe(keyframe: Keyframe): void
 
+    abstract updateKeyframe(keyframe: Keyframe): void;
+
     // this function should be called in the child constructor after initiating all the requried data
     protected abstract rebuildKeyframes(): void;
 

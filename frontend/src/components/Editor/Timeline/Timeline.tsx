@@ -6,6 +6,7 @@ import useWindowDimensions from "../../useWindowDimensions.tsx";
 import {ExpandMore} from "@mui/icons-material";
 import Keyframe from "../../../core/Editor/Entities/Keyframe.ts";
 import {editorService} from "../../../core/DIContainer.tsx";
+import v2 from "../../../core/Math/v2.ts";
 
 type KeyframeElementParams = {
     frame: Keyframe,
@@ -14,11 +15,72 @@ type KeyframeElementParams = {
 
 
 function KeyframeElement({frame, keyframeTableWidth}: KeyframeElementParams): JSX.Element {
+    // const [keyframeTime, setKeyframeTime] = useState(frame.getTime());
+    // const keyframeRef = useRef<HTMLDivElement>();
+    //
+    // let isDown = false;
+    // let isGrabbing = false;
+    // let startedGrabbingPosition = new v2(0,0);
+    // let frameStartingTime = 0;
+    //
+    // function handleMouseMove(e: MouseEvent) {
+    //     if(editorService.isExporting()) return;
+    //     if(!keyframeRef.current) return;
+    //     if(e.target && e instanceof MouseEvent) {
+    //         const boundingRect = keyframeRef.current.getBoundingClientRect();
+    //         const center = new v2((boundingRect.left + boundingRect.right)/2, (boundingRect.top + boundingRect.bottom)/2);
+    //         const pos = new v2(e.clientX, e.clientY);
+    //         if(center.minus(pos).length() < 7) {
+    //             if (isDown && !isGrabbing) {
+    //                 isGrabbing = true;
+    //                 startedGrabbingPosition = pos;
+    //                 frameStartingTime = keyframeTime;
+    //             }
+    //         }
+    //
+    //         if (isGrabbing) {
+    //             const movedByPX = pos.minus(startedGrabbingPosition).x;
+    //             const movedBySec = 60 * movedByPX / (keyframeTableWidth - 75);
+    //             setKeyframeTime(frameStartingTime + movedBySec)
+    //         }
+    //     }
+    // }
+
+    // function handleDown() {
+    //     isDown=true;
+    // }
+    //
+    // function handleUp() {
+    //     if(isGrabbing) {
+    //         frame.setTime(keyframeTime);
+    //         editorService.updateKeyframe(frame);
+    //     }
+    //     isDown=false;
+    //     isGrabbing=false;
+    // }
+    //
+    // useEffect(() => {
+    //     setKeyframeTime(frame.getTime())
+    //     window.addEventListener('mousemove', handleMouseMove)
+    //     window.addEventListener('mouseup', handleUp)
+    //     window.addEventListener('mouseleave', handleUp)
+    //     window.addEventListener('mousedown', handleDown)
+    //
+    //     return () => {
+    //         window.removeEventListener('mousemove', handleMouseMove)
+    //         window.removeEventListener('mouseup', handleUp)
+    //         window.removeEventListener('mouseleave', handleUp)
+    //         window.removeEventListener('mousedown', handleDown)
+    //     }
+    // }, []);
+
+
     const title = `${Math.floor(frame.getTime() / 60).toString().padStart(2, '0')}`+
                 `:${(Math.floor(frame.getTime() % 60)).toString().padStart(2, '0')}`+
                 `:${Math.floor(((frame.getTime() % 1000) % 1) * 1000).toString().padStart(3, '0')}`
     return (
         <div
+            // ref={keyframeRef}
             title={title}
             key={frame.getId()}
             style={{left: `${10 + (frame.getTime() / 60) * (keyframeTableWidth - 75)}px`, top: '7.5px'}}

@@ -185,7 +185,7 @@ export default class Bezier extends ProjectObject {
 
         const massCenter = this.getMassCenter();
         return result.map(
-            v => v2.rotateBy(v.minus(massCenter), rotation).plus(massCenter).scale(scale).plus(position)
+            v => v2.rotateBy(v.minus(massCenter), rotation).scale(scale).plus(massCenter).plus(position)
         );
     }
 
@@ -355,6 +355,17 @@ export default class Bezier extends ProjectObject {
         )
     };
 
+    updateKeyframe(keyframe: Keyframe): void {
+        const frameIndex = this.keyframes.findIndex(e => e.getId() === keyframe.getId());
+        if(frameIndex === -1) {
+            // this frame does not exist yet
+            this.insertKeyframe(keyframe);
+            return;
+        }
+        this.keyframes[frameIndex].setTime(keyframe.getTime());
+        this.keyframes[frameIndex].setValue(keyframe.getValue());
+        this.rebuildKeyframes();
+    }
 
     insertKeyframe(keyframe: Keyframe) {
         // this check should also be done on the server
