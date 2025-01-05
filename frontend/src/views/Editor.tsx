@@ -10,6 +10,7 @@ import {waitFor} from "../core/UI/utils.ts";
 import {EditorContext, EditorContextData, EditorTools} from "../contexts/EditorContext.tsx";
 import {Project} from "../core/Editor/Entities/Project.ts";
 import LeftPanel from "../components/Editor/LeftPanel/LeftPanel.tsx";
+import OptionsPanel from "../components/Editor/LeftPanel/OptionsPanel.tsx";
 
 type DraggableLineParameters = {
     setValue: React.Dispatch<React.SetStateAction<number>>,
@@ -109,6 +110,7 @@ export function Editor(): JSX.Element {
     const [currentTool, setCurrentTool] = useState<EditorTools>(EditorTools.Select);
     const [selectedObject, setSelectedObject] = useState<number|null>(null);
     const [previewTimestamp, setPreviewTimestamp] = useState<number>(0);
+    const [isAutoplaying, setAutoplaying] = useState<boolean>(false);
 
     async function initNewProject(projectName: string) {
         const project = await editorService.createNewProject(projectName);
@@ -140,6 +142,10 @@ export function Editor(): JSX.Element {
 
         if(editorContextData.project !== undefined) {
             setCurrentProject(editorContextData.project)
+        }
+
+        if(editorContextData.isAutoplaying !== undefined) {
+            setAutoplaying(editorContextData.isAutoplaying)
         }
     }
 
@@ -229,11 +235,15 @@ export function Editor(): JSX.Element {
                         currentTool: currentTool,
                         selectedObjectId: selectedObject,
                         previewTimestamp: previewTimestamp,
+                        isAutoplaying: isAutoplaying
                     },
                     updateEditorContext: updateEditorContext,
                 }}>
                     <div className={"w-full flex flex-row content-stretch"}>
-                        <LeftPanel height={height*horizontalSplit} width={width*verticalSplit-2}/>
+                        <div className={'flex flex-col'}>
+                            <OptionsPanel height={50} width={width*verticalSplit-2}/>
+                            <LeftPanel height={height*horizontalSplit - 50} width={width*verticalSplit-2}/>
+                        </div>
                         <DraggableLine setValue={setVerticalSplit} direction={'x'}/>
                         <WorkingWindow height={height*horizontalSplit-1} width={width - width*verticalSplit-2}/>
                     </div>

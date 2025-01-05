@@ -5,42 +5,122 @@ import KeyframeableProperty from "../../../core/Editor/Entities/KeyframeableProp
 import useWindowDimensions from "../../useWindowDimensions.tsx";
 import {ExpandMore} from "@mui/icons-material";
 import Keyframe from "../../../core/Editor/Entities/Keyframe.ts";
+import {editorService} from "../../../core/DIContainer.tsx";
+
+type KeyframeElementParams = {
+    frame: Keyframe,
+    keyframeTableWidth: number
+}
+
+
+function KeyframeElement({frame, keyframeTableWidth}: KeyframeElementParams): JSX.Element {
+    const title = `${Math.floor(frame.getTime() / 60).toString().padStart(2, '0')}`+
+                `:${(Math.floor(frame.getTime() % 60)).toString().padStart(2, '0')}`+
+                `:${Math.floor(((frame.getTime() % 1000) % 1) * 1000).toString().padStart(3, '0')}`
+    return (
+        <div
+            title={title}
+            key={frame.getId()}
+            style={{left: `${10 + (frame.getTime() / 60) * (keyframeTableWidth - 75)}px`, top: '7.5px'}}
+            className={'hover:opacity-100 hover:cursor-pointer opacity-45 absolute h-[10px] aspect-square bg-white rotate-45'}
+        ></div>
+    )
+}
 
 type KeyframeLineParams = {
     keyframeTableWidth: number
     keyframeableProperty: KeyframeableProperty,
 }
 
+
 function KeyframeLine({keyframeTableWidth, keyframeableProperty}: KeyframeLineParams): JSX.Element {
+    const [frames, setFrames] = useState<Keyframe[]>([]);
     const {editorContextData} = useContext<EditorContextType>(EditorContext);
     const {width} = useWindowDimensions()
     const [isExpanded, setIsExpanded] = useState(true);
-    const frames = keyframeableProperty.isLeaf() && editorContextData.selectedObjectId ?
-        editorContextData
-            .project
-            .getObjectById(editorContextData.selectedObjectId)
-            .getFramesForPath(keyframeableProperty.getFullPropertyPath())
-        : []
+    const [editingValue, setEditingValue] = useState(false);
+    const selectedObject = editorService.getSelectedObject();
+
+    function onEditorUpdate() {
+        if(selectedObject && keyframeableProperty.isLeaf()) {
+            setFrames(selectedObject.getFramesForPath(keyframeableProperty.getFullPropertyPath()))
+        }
+    }
+
+    useEffect(()=>{
+        onEditorUpdate();
+        editorService.onEditorUpdate(onEditorUpdate)
+        return () => {
+            editorService.offEditorUpdate(onEditorUpdate)
+        }
+    },[editorContextData])
+
+    const fieldValue = keyframeableProperty.isLeaf() && editorService
+        .getSelectedObject()
+        ?.getValueFromProperyPathAndTimeOrResolveToDefault(
+            keyframeableProperty.getFullPropertyPath(),
+            editorContextData.previewTimestamp
+        ).toFixed(2);
+
+    if(!selectedObject) return <></>;
 
     // is prop
     return keyframeableProperty.isLeaf() ? (
             <div className={'w-full select-none flex flex-row font-normal'}>
                 <div
+                    className={'h-[30px] border-b-[1px] border-b-lightGray box-border flex flex-row justify-between'}
                     style={{
                         width: `${width-keyframeTableWidth}px`,
-                        paddingLeft: `${20*keyframeableProperty.nestDepth()}px`
                     }}
-                    className={`h-[30px] border-b-[1px] border-b-lightGray box-border`}
                 >
-                    {keyframeableProperty.getPrettyName()}
+                    <div
+                        style={{
+                            width: "75%",
+                            paddingLeft: `${20*keyframeableProperty.nestDepth()}px`
+                        }}
+                    >
+                        {keyframeableProperty.getPrettyName()}
+                    </div>
+                    <div onClick={() => setEditingValue(true)} className={'hover:cursor-text pr-2 flex flex-row justify-end items-center w-1/4 text-[12px] text-stone-400'}>
+                        {editingValue ?
+                        <input
+                            className={'w-full outline-none'}
+                            autoFocus={true}
+                            type={"number"}
+                            placeholder={fieldValue ? fieldValue : ""}
+                            onSubmit={console.log}
+                            onBlur={() => setEditingValue(false)}
+                            onKeyDown={async e => {
+                                if (e.key === "Enter") {
+                                    // submit
+                                    setEditingValue(false)
+                                    if (e.target && (e.target as HTMLInputElement).value) {
+                                        const value = Number((e.target as HTMLInputElement).value);
+                                        if(isNaN(value)) {
+                                            console.log("Oh no its a nan: ", value)
+                                            return;
+                                        }
+                                        editorService.insertKeyframe(
+                                            selectedObject?.getId(),
+                                            keyframeableProperty.getFullPropertyPath(),
+                                            value,
+                                            editorContextData.previewTimestamp,
+                                        )
+                                        // obj.setName((e.target as HTMLInputElement).value)
+                                        // await editorService.updateObjectUniversal(obj);
+                                    }
+                                    // setEditingNameId(null);
+                                }
+                            }}
+                        />
+                        : fieldValue}
+                        {/*<div className={'h-[10px] rotate-45 aspect-square bg-black'}></div>*/}
+                    </div>
                 </div>
-                <div style={{width: `${keyframeTableWidth}px`}} className={`border-b-[1px] border-b-lightGray relative bg-blackGray h-[30px]`}>
-                    {frames.map( (frame: Keyframe) => (
-                        <div
-                            key={frame.getId()}
-                            style={{ left: `${15 + (frame.getTime()/60) * (keyframeTableWidth-40)}px`, top: '7.5px' }}
-                            className={'hover:opacity-100 hover:cursor-pointer opacity-45 absolute h-1/2 aspect-square bg-white rotate-45'}
-                        ></div>
+                <div style={{width: `${keyframeTableWidth}px`}}
+                     className={`border-b-[1px] border-b-lightGray relative bg-blackGray h-[30px]`}>
+                    {frames.map((frame: Keyframe) => (
+                        <KeyframeElement keyframeTableWidth={keyframeTableWidth} key={frame.getId()} frame={frame}/>
                     ))}
                 </div>
             </div>
@@ -99,6 +179,7 @@ function TimeNeedle({ minPosition, maxPosition, height }: TimeNeedleParameters):
     let mouseOverOffTimer: NodeJS.Timeout|null = null;
 
     function handleMoseMove(event: MouseEvent) {
+        if (editorService.isExporting()) return;
         if ( dotRef.current ) {
             const rect: DOMRect  = dotRef.current.getBoundingClientRect();
             const distY = Math.abs(event.clientY - (rect.top + rect.bottom)/2);
@@ -127,9 +208,13 @@ function TimeNeedle({ minPosition, maxPosition, height }: TimeNeedleParameters):
                     const xNorm = Math.max(Math.min(maxPosition, event.clientX), minPosition) - minPosition;
                     // console.log(maxPosition, minPosition)
                     // console.log((xNorm/(maxPosition-minPosition)) * 60)
+
+                    // snap to the nearest 1/30 of a sec
+                    const ts = (xNorm/(maxPosition-minPosition)) * 60;
                     updateEditorContext({
-                        previewTimestamp: (xNorm/(maxPosition-minPosition)) * 60
+                        previewTimestamp: Math.round( ts * 30 ) / 30
                     })
+                    editorService.setPlayback(Math.round( ts * 30 ) / 30);
                 }
             } else {
                 if(timestampRef.current) {
@@ -186,7 +271,7 @@ function TimeNeedle({ minPosition, maxPosition, height }: TimeNeedleParameters):
                 left: `${-6 + minPosition + (editorContextData.previewTimestamp/60)*(maxPosition-minPosition)}px`,
                 top: '-2.5px',
             }}
-            className={'absolute z-50 w-[12px] h-[45px] rounded-full bg-yellow-200 shadow-2xl'}
+            className={'absolute z-50 w-[13px] h-[25px] rounded-full bg-yellow-200 shadow-2xl'}
         >
             <div
                 ref={timestampRef}
@@ -212,9 +297,22 @@ export default function Timeline({keyframeTableWidth, height}: {
 } & ComponentWithDimensions): JSX.Element {
     const {width} = useWindowDimensions()
     const {editorContextData} = useContext<EditorContextType>(EditorContext);
+    const [keyframeProperties, setKeyframeProperties] = useState<KeyframeableProperty[]>([]);
+
+    useEffect(() => {
+        const selectedObject = editorService.getSelectedObject();
+        if(selectedObject) {
+            setKeyframeProperties(
+                selectedObject.getKeyframableProperties()
+            );
+        } else {
+            setKeyframeProperties([]);
+        }
+    }, [editorContextData]);
+
     return (
         <div style={{height: `${height-25}px`, marginTop: '25px'}} className={`relative w-full bg-darkGray flex flex-col`}>
-            <TimeNeedle minPosition={width-keyframeTableWidth + 15} maxPosition={width-40} height={height-25}/>
+            <TimeNeedle minPosition={width-keyframeTableWidth + 15} maxPosition={width-60} height={height-25}/>
             <div className={'flex h-[40px] z-10 flex-row shadow-lg'}>
                 <div style={{width: `${width - keyframeTableWidth}px`, height: '100%'}}></div>
                 <div style={{width: `${keyframeTableWidth}px`, height: '100%'}} className={'relative border-1'}>
@@ -223,7 +321,7 @@ export default function Timeline({keyframeTableWidth, height}: {
                             key={i}
                             style={{
                                 bottom: `0px`,
-                                left: `${15 + (i/120) * (keyframeTableWidth-40)}px`,
+                                left: `${Math.floor(15 + (i/119) * (keyframeTableWidth-75)) - 1}px`,
                                 height: `${i%2==0?'55%':'25%'}`
                             }}
                             className={'absolute w-[1px] bg-white'}
@@ -233,14 +331,10 @@ export default function Timeline({keyframeTableWidth, height}: {
             </div>
             <div style={{ height: `${height-40}px`}} className={'flex flex-col overflow-y-scroll scroll-m-72'}>
                 {
-                    editorContextData.selectedObjectId && editorContextData
-                        .project
-                        .getObjectById(editorContextData.selectedObjectId)
-                        .getKeyframableProperties()
-                        .map((p: KeyframeableProperty) =>
-                            <KeyframeLine key={p.getFullPropertyPath()} keyframeableProperty={p}
-                                          keyframeTableWidth={keyframeTableWidth}/>
-                        )
+                    keyframeProperties.map((p: KeyframeableProperty) =>
+                        <KeyframeLine key={p.getFullPropertyPath()} keyframeableProperty={p}
+                                      keyframeTableWidth={keyframeTableWidth}/>
+                    )
                 }
                 <div className={'flex flex-1'}>
                     <div style={{width: `${width - keyframeTableWidth}px`, height: '100%'}}></div>

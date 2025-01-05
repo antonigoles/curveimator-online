@@ -7,4 +7,5 @@ export default interface Shape {
     dashedLine?: number[];
     fillColor?: color,
     strokeColor?: color,
+    strokeProgress?: number
 }

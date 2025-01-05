@@ -15,6 +15,7 @@ export type EditorContextData = {
     project: Project,
     selectedObjectId: null|number;
     previewTimestamp: number,
+    isAutoplaying: boolean,
 }
 
 export type EditorContextType = {
@@ -28,6 +29,7 @@ export const EditorContext = createContext<EditorContextType>({
         project: new Project(0, randomName(), []),
         selectedObjectId: null,
         previewTimestamp: 0,
+        isAutoplaying: false
     },
     updateEditorContext: () => {
         throw new Error('Editor Context running on default value; somehow was not initialized')

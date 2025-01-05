@@ -19,7 +19,6 @@ export default function WorkingWindow({width, height}: ComponentWithDimensions):
     }
 
     const [loading, setLoading] = useState<boolean>(true);
-    const [isPlaying, setPlaying] = useState<boolean>(false);
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
     let isMouseDown = false;
@@ -28,16 +27,19 @@ export default function WorkingWindow({width, height}: ComponentWithDimensions):
     let beginGrabObjectPosition: v2|null = null;
     let beginGrabObjectRotation = 0;
 
-    function handleMouseDown(event: MouseEvent) {
+    function handleMouseDown() {
         isMouseDown = true;
     }
 
-    function handleMouseUp(event: MouseEvent) {
+    function handleMouseUp() {
         isMouseDown = false;
         hasGrabbed = false;
         beginGrabPosition = null;
         beginGrabObjectPosition = null;
         beginGrabObjectRotation = 0;
+        const selected = editorService.getSelectedObject();
+        if(!selected) return;
+        // selected.setForceLocalPosition(false);
     }
 
     function handleMouseMove(event: MouseEvent) {
@@ -56,9 +58,12 @@ export default function WorkingWindow({width, height}: ComponentWithDimensions):
                 beginGrabPosition = position;
                 beginGrabObjectPosition = selected.getPosition();
                 hasGrabbed = true;
+                // selected.setForceLocalPosition(true);
             } else if (hasGrabbed && beginGrabPosition && beginGrabObjectPosition) {
                 const nextPosition = beginGrabObjectPosition.plus(position).minus(beginGrabPosition);
                 editorService.moveObjectTo(selected.getId(), nextPosition);
+                editorService.insertKeyframe(selected.getId(), 'x', nextPosition.x, editorContextData.previewTimestamp);
+                editorService.insertKeyframe(selected.getId(), 'y', nextPosition.y, editorContextData.previewTimestamp);
                 return;
             }
         }
@@ -137,6 +142,7 @@ export default function WorkingWindow({width, height}: ComponentWithDimensions):
         }
     }
 
+
     useEffect(() => {
         let refCopy=null;
         if(canvasRef.current) {
@@ -186,12 +192,23 @@ export default function WorkingWindow({width, height}: ComponentWithDimensions):
                     ref={canvasRef}
                 />
             </div>
-            <div className={'w-full flex-1 flex justify-center items-center'}>
+            <div className={'relative w-full flex-1 flex justify-center items-center'}>
+                <div className={'absolute left-[15px]'}>
+                {Math.floor(editorContextData.previewTimestamp / 60).toString().padStart(2, '0')}
+                :{(Math.floor(editorContextData.previewTimestamp % 60)).toString().padStart(2, '0')}
+                :{Math.floor(((editorContextData.previewTimestamp % 1000) % 1) * 1000).toString().padStart(3, '0')}
+                </div>
                 <div
-                    onClick={() => setPlaying(!isPlaying)}
+                    onClick={() => {
+                        if(editorContextData.isAutoplaying) editorService.stopAutoPlayback();
+                        else editorService.startAutoPlaybackFrom(editorContextData.previewTimestamp);
+                        updateEditorContext({
+                            isAutoplaying: !editorContextData.isAutoplaying
+                        })
+                    }}
                     className={'flex justify-center items-center hover:cursor-pointer'}
                 >
-                    {isPlaying ? <Stop fontSize={"large"} /> : <PlayArrow fontSize={"large"} />}
+                    {editorContextData.isAutoplaying ? <Stop fontSize={"large"} /> : <PlayArrow fontSize={"large"} />}
                 </div>
             </div>
         </div>

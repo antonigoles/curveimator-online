@@ -11,21 +11,28 @@ import RenderableObject from "../../Render/RenderableObject.ts";
 import {ObjectInTime, Primitive} from "../../Render/ObjectInTime.ts";
 import Color from "../../Math/color.ts";
 import Shape from "../../Render/Shape.ts";
+import Keyframe from "../Entities/Keyframe.ts";
 
 export default class EditorService
 {
     private selectionObject: RenderableObject = {
-        getObjectInTime: this.renderUISelectionObject.bind(this)
+        // getObjectInTime: this.renderUISelectionObject.bind(this),
+        getObjectInCurrentState: this.renderUISelectionObject.bind(this)
     }
     private onEditorUpdateCallbacks: ((editorContextData: Partial<EditorContextData>) => void)[] = []
     private selectedObjectId: number|null = null;
     private currentProject: Project|null = null;
-    private syncTimeoutMap: {[key: number]: NodeJS.Timeout|null} = {};
+    private syncTimeoutMap: {[key: string]: NodeJS.Timeout|null} = {};
 
     private projectRepository: ProjectRepository;
     private screenRenderEngine: ScreenRenderEngine;
     private apiService: APIService;
 
+    private isAutoPlaying: boolean = false;
+    private exporting: boolean = false;
+    private autoPlaybackProgress: number = 0;
+    private playbackRate: number = 1;
+    private playbackUpdateInterval: NodeJS.Timeout|null = null;
 
     constructor(
         projectRepository: ProjectRepository,
@@ -35,6 +42,96 @@ export default class EditorService
         this.projectRepository = projectRepository;
         this.screenRenderEngine = screenRenderEngine;
         this.apiService = apiService;
+    }
+
+    isExporting(): boolean {
+        return this.exporting;
+    }
+
+    isAutoPlayingEnabled(): boolean {
+        return this.isAutoPlaying;
+    }
+
+    startAutoPlaybackFrom(timestamp: number): void {
+        this.isAutoPlaying = true;
+        this.autoPlaybackProgress = timestamp;
+        this.playbackUpdateInterval = setInterval(()=>{
+            if(!this.currentProject) throw new Error('No project loaded')
+            this.autoPlaybackProgress += this.playbackRate * (8/1000);
+            this.autoPlaybackProgress=Math.min(this.autoPlaybackProgress, 60)
+            for ( const obj of this.currentProject.getObjects() ) {
+                obj.updateObjectWithValuesAtTime(this.autoPlaybackProgress);
+            }
+            if(this.autoPlaybackProgress>=60.0) {
+                this.stopAutoPlayback();
+            } else {
+                this.callEditorUpdateCallbacks({
+                    previewTimestamp: this.autoPlaybackProgress
+                })
+            }
+
+        }, 8)
+    }
+
+    stopAutoPlayback(): void {
+        this.isAutoPlaying = false;
+        if(this.playbackUpdateInterval) {
+            clearTimeout(this.playbackUpdateInterval)
+        }
+        this.callEditorUpdateCallbacks({
+            isAutoplaying: false
+        })
+    }
+
+    setPlaybackRate(rate: number): void {
+        this.playbackRate = rate;
+    }
+
+    setPlayback(timestamp: number): void {
+        if(!this.currentProject) throw new Error('No project loaded')
+        // this.stopAutoPlayback();
+        this.autoPlaybackProgress = timestamp;
+        for ( const obj of this.currentProject.getObjects() ) {
+            obj.updateObjectWithValuesAtTime(timestamp);
+        }
+        // this.screenRenderEngine.setProgress(timestamp);
+    }
+
+    exportToVideoAndGetURL(from: number = 0, to: number = 60000, bitrate: number = 3500): Promise<string> {
+        const canvas = this.screenRenderEngine.getCanvas();
+        if(!canvas) throw new Error('No canvas loaded')
+        this.stopAutoPlayback();
+        this.setPlayback(from * 1000);
+        // this.setPlaybackRate(60);
+        this.exporting = true;
+        const recordedChunks: Blob[] = [];
+        return new Promise((resolve) => {
+            const stopExporting = () => {
+                this.exporting = false;
+                this.stopAutoPlayback();
+            }
+            const stream = canvas.captureStream(60);
+            const mediaRecorder = new MediaRecorder(stream, {
+                mimeType: "video/mp4;codecs:h.265",
+                bitsPerSecond: bitrate
+            })
+
+            mediaRecorder.start(to - from);
+            this.startAutoPlaybackFrom(0);
+            mediaRecorder.ondataavailable = function(event) {
+                recordedChunks.push(event.data);
+                if (mediaRecorder.state === 'recording') {
+                    mediaRecorder.stop();
+                }
+            }
+
+            mediaRecorder.onstop = function () {
+                const blob = new Blob(recordedChunks, {type: "video/webm" });
+                const url = URL.createObjectURL(blob);
+                stopExporting();
+                resolve(url);
+            }
+        })
     }
 
     getCurrentProject(): Project|null {
@@ -108,6 +205,19 @@ export default class EditorService
         }
     }
 
+    public resolveObjectIdsFromV2AtTime(position: v2, time: number): number[] {
+        if(!this.currentProject) throw new Error('No project loaded')
+        const objects = this.currentProject.getObjects();
+        const resolved = [];
+        for ( const object of objects ) {
+            // we assume these points are sorted by angle towards the middle (required by the Domain)
+            if(object.positionInsideObjectBoundaryPolygonAtTime(position, time)) {
+                resolved.push(object.getId())
+            }
+        }
+        return resolved;
+    }
+
     public resolveObjectIdsFromV2(position: v2): number[] {
         if(!this.currentProject) throw new Error('No project loaded')
         const objects = this.currentProject.getObjects();
@@ -126,7 +236,8 @@ export default class EditorService
     }
 
     async changeProject(project: Project): Promise<void> {
-        this.currentProject = project;
+        this.currentProject = project
+        this.setPlayback(0);
         this.resendProjectToRenderer();
         await this.apiService.connectSocket();
         await this.apiService.joinRoom({ projectId: project.getId() });
@@ -145,19 +256,62 @@ export default class EditorService
                         this.deleteObjectLocal(object.getId());
                         break;
                 }
+            } else if (response.result.objectType === 'keyframe') {
+                if (!this.currentProject) throw new Error("I shouldn't be able to receive this update!");
+                const keyframe = Keyframe.fromKeyframeResponse(response.result.newState);
+                const targetObject = this.currentProject.getObjectById(keyframe.getProjectObjectId());
+                if(!targetObject) throw new Error("What");
+                console.log(targetObject)
+                switch (response.result.action) {
+                    case "create":
+                        targetObject.insertKeyframe(keyframe);
+                        this.callEditorUpdateCallbacks({
+                            selectedObjectId: this.selectedObjectId,
+                        });
+                        break;
+                    case "update":
+                        throw new Error('Keyframe update handler not implemented')
+                        break;
+                    case "delete":
+                        throw new Error('Keyframe delete handler not implemented')
+                        break;
+                }
             }
         })
     }
 
     private waitForTimeToSyncObject(object: ProjectObjectTypes, time: number): void {
-        if (object.getId() in this.syncTimeoutMap) {
-            const timeout = this.syncTimeoutMap[object.getId()]
+        if (object.getId().toString() in this.syncTimeoutMap) {
+            const timeout = this.syncTimeoutMap[object.getId().toString()]
             if(timeout) clearTimeout(timeout);
         }
-        this.syncTimeoutMap[object.getId()] = setTimeout(() => {
+        this.syncTimeoutMap[object.getId().toString()] = setTimeout(() => {
             this.updateObjectUniversal(object);
-            this.syncTimeoutMap[object.getId()] = null;
+            this.syncTimeoutMap[object.getId().toString()] = null;
         }, time)
+    }
+
+    private waitForTimeToSendKeyframe(
+        objectId: number,
+        path: string,
+        time: number,
+        value: number,
+        waitTime: number,
+    ): void {
+        const id: string = `${objectId}-${path}-${time}`;
+        if (id in this.syncTimeoutMap) {
+            const timeout = this.syncTimeoutMap[id]
+            if(timeout) clearTimeout(timeout);
+        }
+        this.syncTimeoutMap[id] = setTimeout(() => {
+            this.sendKeyframe(objectId, path, value, time);
+            this.syncTimeoutMap[id] = null;
+        }, waitTime)
+    }
+
+    insertKeyframe(objectId: number, path: string, value: number, time: number): void {
+        if (!this.currentProject) throw new Error('No project loaded')
+        this.waitForTimeToSendKeyframe(objectId, path, time, value, 200);
     }
 
     moveObjectTo(objectId: number, position: v2): void {
@@ -167,7 +321,7 @@ export default class EditorService
         target.setPosition(position);
 
         // make the server react after some time
-        this.waitForTimeToSyncObject(target, 200);
+        // this.waitForTimeToSyncObject(target, 200);
     }
 
     rotateObjectTo(objectId: number, rotation: number): void {
@@ -272,6 +426,21 @@ export default class EditorService
         })
     }
 
+    async sendKeyframe(objectId: number, path: string, value: number, time: number): Promise<void> {
+        if(!this.currentProject) throw new Error('No current project');
+        await this.apiService.projectUpdate({
+            projectId: this.currentProject.getId(),
+            type: "create",
+            data: {
+                type: 'keyframe',
+                objectId: objectId,
+                propertyPath: path,
+                time: time,
+                value: value,
+            },
+        })
+    }
+
     async updateObjectUniversal(object: ProjectObjectTypes): Promise<void> {
         if(!this.currentProject) throw new Error('No current project');
         await this.apiService.projectUpdate({
@@ -322,6 +491,12 @@ export default class EditorService
 
     onEditorUpdate(callback: (editorContextData: Partial<EditorContextData>) => void): void {
         this.onEditorUpdateCallbacks.push(callback);
+    }
+
+    offEditorUpdate(callback: (editorContextData: Partial<EditorContextData>) => void): void {
+        this.onEditorUpdateCallbacks = this.onEditorUpdateCallbacks.filter(
+            cb => cb !== callback
+        )
     }
 
     private callEditorUpdateCallbacks(editorContextData: Partial<EditorContextData>): void {

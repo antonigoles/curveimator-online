@@ -41,6 +41,10 @@ export default class Keyframe {
         return this.value;
     }
 
+    public setValue(value: number) {
+        this.value = value;
+    }
+
     static fromKeyframeResponse(response: KeyframeResponse) {
         return new Keyframe(response.id, response.projectObjectId, response.propertyPath, response.time, response.value)
     }

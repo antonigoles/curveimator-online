@@ -88,6 +88,15 @@ export function validateControlPointProperty(data: any): ValidatorResult
     const path = data.data.propertyPath.split('.');
     if (path.length !== 3) return validatorResult(false, `Bad prop parts length at: ${data.data.propertyPath}`)
     if (isNaN(path[1])) return incorrectType(`path: ${data.data.propertyPath} - ${path[1]} (index)`);
+    if (!['x','y'].includes(path[2])) return incorrectType(`path: ${data.data.propertyPath} - ${path[2]} (index)`);
+    return validatorResult(true);
+}
+
+export function validateColorPropertyPath(data: any): ValidatorResult
+{
+    const path = data.data.propertyPath.split('.');
+    if (path.length !== 2) return validatorResult(false, `Bad prop parts length at: ${data.data.propertyPath}`)
+    if (!['r','g','b','a'].includes(path[1])) return incorrectType(`path: ${data.data.propertyPath} - ${path[1]} (index)`);
     return validatorResult(true);
 }
 
@@ -96,8 +105,10 @@ export function validatePropertyPath(data: any): ValidatorResult
     if (!("propertyPath" in data.data)) return missingField('data.propertyPath');
     if (typeof data.data.propertyPath !== 'string') return incorrectType('data.propertyPath');
     const path = data.data.propertyPath.split('.');
-    if (!['cp'].includes(path[0])) return validatorResult(false, `Bad prop path at: ${path[0]}`)
-    if ( path[0] === 'cp' ) return validateControlPointProperty(data);
+    if (!['cp','x','y','s','r','color','sp','st'].includes(path[0])) return validatorResult(false, `Bad prop path at: ${path[0]}`)
+    if (path[0] === 'cp') return validateControlPointProperty(data);
+    if (path[0] === 'color') return validateColorPropertyPath(data);
+    if (['x','y','s','r','sp','st'].includes(path[0])) return validatorResult(true)
     return validatorFinish('PropertyPath');
 }
 

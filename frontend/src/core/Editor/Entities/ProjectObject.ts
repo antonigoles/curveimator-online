@@ -4,6 +4,7 @@ import KeyframeableProperty from "./KeyframeableProperty.ts";
 import RenderableObject from "../../Render/RenderableObject.ts";
 import {ObjectInTime} from "../../Render/ObjectInTime.ts";
 import {angle} from "../../Math/utils.ts";
+import {ProjectObjectTypes} from "./Project.ts";
 
 export default abstract class ProjectObject implements RenderableObject {
     protected id: number;
@@ -16,6 +17,8 @@ export default abstract class ProjectObject implements RenderableObject {
     protected keyframeMap: {[key: string]: Keyframe[]} = {}; // keyframes by id
     protected keyframeableProperyMap: {[key: string]: KeyframeableProperty} = {}; // keyframeables by path
     protected keyframeableProperies: KeyframeableProperty[] = []; // keyframeable list
+
+    protected forceLocalPosition: boolean = false;
 
     constructor(
         id: number,
@@ -33,35 +36,16 @@ export default abstract class ProjectObject implements RenderableObject {
         this.rotation = rotation
         this.scale = scale
         this.keyframes = keyframes;
-        this.initKeyframeables();
-        this.rebuildKeyframeMap();
     }
 
-    private rebuildKeyframeMap(): void
-    {
-        for (const keyframe of this.keyframes) {
-            this.keyframeMap[keyframe.getPropertyPath()] = [
-                ...(this.keyframeMap[keyframe.getPropertyPath()] ?? []),
-                keyframe
-            ];
-        }
+    public setForceLocalPosition(state: boolean): void {
+        this.forceLocalPosition = state;
     }
 
-    private initKeyframeables(): void
-    {
-        this.keyframeableProperies = [
-            ...this.keyframeableProperies,
-            new KeyframeableProperty('x'),
-            new KeyframeableProperty('y'),
-            new KeyframeableProperty('scale'),
-            new KeyframeableProperty('rotation'),
-        ]
+    protected abstract insertKeyframe(keyframe: Keyframe): void
 
-        // TODO: Remake it
-        // for (const keyframeable of this.keyframeableProperies) {
-        //     this.keyframeableProperyMap[keyframeable.getFullPropertyPath()] = keyframeable;
-        // }
-    }
+    // this function should be called in the child constructor after initiating all the requried data
+    protected abstract rebuildKeyframes(): void;
 
     getId(): number {
         return this.id;
@@ -111,13 +95,27 @@ export default abstract class ProjectObject implements RenderableObject {
         this.rotation = rotation;
     }
 
-    updateDataWith(object: ProjectObject) {
-        Object.assign(this, object);
-    }
+    abstract updateDataWith(object: ProjectObjectTypes): void;
 
     abstract getBoundaryPolygon(): v2[];
 
+    abstract getBoundaryPolygonAtTime(time: number): v2[];
+
     abstract getObjectInTime(time: number): ObjectInTime;
+
+    abstract getObjectInCurrentState(): ObjectInTime;
+
+    positionInsideObjectBoundaryPolygonAtTime(position: v2, time: number): boolean {
+        const polygon = this.getBoundaryPolygonAtTime(time);
+        let angleSum = 0;
+        for ( let i = 0; i<polygon.length; i++ ) {
+            angleSum += Math.abs(angle(
+                polygon[i].minus(position),
+                polygon[(i + 1) % polygon.length].minus(position),
+            ))
+        }
+        return angleSum > 1.8 * Math.PI;
+    }
 
     positionInsideObjectBoundaryPolygon(position: v2): boolean {
         const polygon = this.getBoundaryPolygon();
@@ -131,6 +129,15 @@ export default abstract class ProjectObject implements RenderableObject {
         return angleSum > 1.8 * Math.PI;
     }
 
+    positionInsideObjectBoundarySquareAtTime(position: v2,  time: number, padding: number = 12): boolean {
+        const polygon = this.getBoundaryPolygonAtTime(time);
+        const maxX = Math.max(...(polygon.map(v => v.x))) + padding;
+        const maxY = Math.max(...(polygon.map(v => v.y))) + padding;
+        const minX = Math.min(...(polygon.map(v => v.x))) - padding;
+        const minY = Math.min(...(polygon.map(v => v.y))) - padding;
+        return position.x > minX && position.x < maxX && position.y > minY && position.y < maxY;
+    }
+
     positionInsideObjectBoundarySquare(position: v2, padding: number = 12): boolean {
         const polygon = this.getBoundaryPolygon();
         const maxX = Math.max(...(polygon.map(v => v.x))) + padding;
@@ -141,4 +148,8 @@ export default abstract class ProjectObject implements RenderableObject {
     }
 
     abstract getMassCenter(): v2;
+
+    abstract getPositionAtTime(time: number): v2;
+
+    abstract updateObjectWithValuesAtTime(time: number): void;
 }

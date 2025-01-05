@@ -1,3 +1,4 @@
+// deno-lint-ignore-file prefer-const
 import {ProjectUpdate, UpdateResult} from "./ProjectUpdate.ts";
 import Keyframe from "../../models/keyframe.model.ts";
 
@@ -23,18 +24,40 @@ export default class CreateKeyframe implements ProjectUpdate {
     }
 
     async perform(): Promise<UpdateResult> {
-        const keyframe = await Keyframe.create({
-            projectObjectId: this.objectId,
-            time: this.time,
-            value: this.value,
-            propertyPath: this.propertyPath
-        })
+        let target = null;
+        const keyframes = await Keyframe.findAll({
+            where: {
+                projectObjectId: this.objectId,
+                propertyPath: this.propertyPath,
+            }
+        });
+
+        const epsilon = 1/32; // should be enough
+        for (const keyframe of keyframes) {
+            if ( Math.abs(keyframe.time - this.time) < epsilon ) {
+                // same keyframe
+                target = keyframe;
+                break;
+            }
+        }
+
+        if (!target) {
+            target = await Keyframe.create({
+                projectObjectId: this.objectId,
+                propertyPath: this.propertyPath,
+                value: this.value,
+                time: this.time,
+            })
+        } else {
+            target.value = this.value;
+            await target.save();
+        }
 
         return {
             objectType: 'keyframe',
-            objectId: keyframe.id,
+            objectId: target.id,
             action: 'create',
-            newState: keyframe.toJSON()
+            newState: target.toJSON()
         };
     }
 }
