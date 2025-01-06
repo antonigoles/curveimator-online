@@ -11,7 +11,9 @@ const app = express();
 app.use(cors({
     origin: env.DEV_MODE ? [
         "https://localhost:5173",
-        "http://localhost:5173"
+        "http://localhost:5173",
+        "http://157.230.107.146",
+        "http://157.230.107.146:80",
     ] : [
         //TODO: Implement
     ],

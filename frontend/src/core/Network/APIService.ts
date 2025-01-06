@@ -2,11 +2,12 @@ import ProjectResponse from "./Responses/ProjectResponse.ts";
 import APIError from "./Responses/APIError.ts";
 import {io, Socket} from "socket.io-client";
 import {UpdateResult} from "../Editor/DTO/UpdateResult.ts";
+import config from "../../../config.json"
 
 export default class APIService
 {
-    static REST_API_URL = 'http://localhost:3001'
-    static SOCKET_IO_URL = 'ws://localhost:2115'
+    static REST_API_URL = config.backendUrl; // 'http://localhost:3001'
+    static SOCKET_IO_URL = config.wsUrl; // 'ws://localhost:2115'
 
     private socket: Socket|null = null;
     private isAwaitingConnection: boolean = false;

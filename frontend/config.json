@@ -1,0 +1,4 @@
+{
+  "backendUrl": "http://localhost:3001",
+  "wsUrl": "ws://localhost:2115"
+}
