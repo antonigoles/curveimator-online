@@ -193,6 +193,16 @@ export default class Bezier extends ProjectObject {
         return this.controlPoints;
     }
 
+    getControlPointsCurrentTransformed(): v2[] {
+        const mc = this.getMassCenter();
+        return this.controlPoints.map(
+            p => v2.rotateBy(p.minus(mc), this.getRotation())
+                .scale(this.getScale())
+                .plus(mc)
+                .plus(this.getPosition())
+        );
+    }
+
     resolveDefaultValueFromPath(path: string): number {
         const toGetterMap: {[key: string]: number} = {
             'x': this.getPosition().x,
@@ -354,6 +364,11 @@ export default class Bezier extends ProjectObject {
             this.getValueFromProperyPathAndTimeOrResolveToDefault('y', time)
         )
     };
+
+    updateControlPoint(index: number, position: v2): void {
+        if (!this.controlPoints[index]) throw new Error("Out of index")
+        this.controlPoints[index] = position;
+    }
 
     updateKeyframe(keyframe: Keyframe): void {
         const frameIndex = this.keyframes.findIndex(e => e.getId() === keyframe.getId());

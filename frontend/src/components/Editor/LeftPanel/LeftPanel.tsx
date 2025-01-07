@@ -6,6 +6,7 @@ import {editorService} from "../../../core/DIContainer.tsx";
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import CancelIcon from '@mui/icons-material/Cancel';
+import LocationSearchingIcon from '@mui/icons-material/LocationSearching';
 
 function ObjectList(): JSX.Element {
     const [editingNameId, setEditingNameId] = useState<number|null>(null);
@@ -132,6 +133,10 @@ function ToolList(): JSX.Element {
         {
             tool: EditorTools.Scale,
             icon: PhotoSizeSelectSmall,
+        },
+        {
+            tool: EditorTools.ControlPointEditor,
+            icon: LocationSearchingIcon
         },
         {
             tool: EditorTools.Bezier,

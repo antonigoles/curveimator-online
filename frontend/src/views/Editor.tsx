@@ -26,33 +26,35 @@ function DraggableLine({ setValue, direction }: DraggableLineParameters): JSX.El
     //     if(direction == 'y') setValue(event.clientY/height);
     // }
 
-    let isMouseDown = false;
+    let isHovering = false;
+    let isGrabbing = false;
 
     function handleMoseMove(event: MouseEvent) {
         if ( lineRef.current ) {
             const rect: DOMRect  = lineRef.current.getBoundingClientRect();
             if(direction === 'x') {
                 const dist = Math.abs(event.clientX - rect.left);
-                if (dist < 20) {
-                    document.body.style.cursor = "ew-resize";
-                    if(isMouseDown) {
-                        setValue(event.clientX/width)
-                    }
+                if (dist < 5) {
+                    isHovering = true;
                 } else {
-                    document.body.style.cursor = "inherit";
+                    isHovering = false;
+                }
+
+                if (isGrabbing) {
+                    setValue(event.clientX/width)
                 }
             }
 
             if(direction === 'y') {
                 const dist = Math.abs(event.clientY - rect.top);
-                if (dist < 20) {
-                    document.body.style.cursor = "ns-resize";
-                    if(isMouseDown) {
-                        setValue(event.clientY/height)
-                    }
+                if (dist < 5) {
+                    isHovering = true;
                 } else {
-                    if (document.body.style.cursor !== "ew-resize")
-                        document.body.style.cursor = "inherit";
+                    isHovering = false;
+                }
+
+                if(isGrabbing) {
+                    setValue(event.clientY/height)
                 }
             }
         }
@@ -60,27 +62,26 @@ function DraggableLine({ setValue, direction }: DraggableLineParameters): JSX.El
     }
 
     function handleMoseUp() {
-        isMouseDown=false;
+        isGrabbing=false;
     }
 
     function handleMoseDown() {
-        isMouseDown=true;
+        if(isHovering) isGrabbing=true;
     }
 
-    // useEffect(() => {
-    //     window.addEventListener("mousemove", handleMoseMove);
-    //     window.addEventListener("mousedown", handleMoseDown);
-    //     window.addEventListener("mouseleave", handleMoseDown);
-    //     window.addEventListener("mouseup", handleMoseUp);
-    //
-    //     return () => {
-    //         window.removeEventListener("mousemove", handleMoseMove);
-    //         window.removeEventListener("mousedown", handleMoseDown);
-    //         window.removeEventListener("mouseleave", handleMoseDown);
-    //         window.removeEventListener("mouseup", handleMoseUp);
-    //
-    //     }
-    // }, []);
+    useEffect(() => {
+        window.addEventListener("mousemove", handleMoseMove);
+        window.addEventListener("mousedown", handleMoseDown);
+        window.addEventListener("mouseleave", handleMoseUp);
+        window.addEventListener("mouseup", handleMoseUp);
+
+        return () => {
+            window.removeEventListener("mousemove", handleMoseMove);
+            window.removeEventListener("mousedown", handleMoseDown);
+            window.removeEventListener("mouseleave", handleMoseUp);
+            window.removeEventListener("mouseup", handleMoseUp);
+        }
+    }, []);
 
     return (
         <div
@@ -89,7 +90,7 @@ function DraggableLine({ setValue, direction }: DraggableLineParameters): JSX.El
                 width: direction == 'x' ? '2px': `100%`,
                 height: direction == 'x' ? `100%` : '2px',
             }}
-            className={`bg-lightGray`}
+            className={`bg-lightGray hover:${direction==='x'?"cursor-ne-resize":"cursor-n-resize"}`}
         ></div>
     )
 }

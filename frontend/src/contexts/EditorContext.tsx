@@ -7,7 +7,8 @@ export enum EditorTools {
     Bezier = 1,
     Transform = 2,
     Rotate = 3,
-    Scale = 4
+    Scale = 4,
+    ControlPointEditor = 5
 }
 
 export type EditorContextData = {

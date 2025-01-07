@@ -1,89 +1,33 @@
 import ComponentWithDimensions from "../../ParameterTypes/ComponentWithDimensions.ts";
-import {useContext, useEffect, useRef, useState} from "react";
+import {Dispatch, SetStateAction, useCallback, useContext, useEffect, useRef, useState} from "react";
 import {EditorContext, EditorContextType} from "../../../contexts/EditorContext.tsx";
 import KeyframeableProperty from "../../../core/Editor/Entities/KeyframeableProperty.ts";
 import useWindowDimensions from "../../useWindowDimensions.tsx";
-import {ExpandMore} from "@mui/icons-material";
+import {Edit, ExpandMore} from "@mui/icons-material";
 import Keyframe from "../../../core/Editor/Entities/Keyframe.ts";
 import {editorService} from "../../../core/DIContainer.tsx";
+import TextInput from "../../input/TextInput.tsx";
 import v2 from "../../../core/Math/v2.ts";
+import {clamp} from "../../../core/Math/utils.ts";
+import {normalizePath} from "vite";
 
 type KeyframeElementParams = {
     frame: Keyframe,
-    keyframeTableWidth: number
+    keyframeTableWidth: number,
+    minTime: number,
+    maxTime: number,
 }
 
 
-function KeyframeElement({frame, keyframeTableWidth}: KeyframeElementParams): JSX.Element {
-    // const [keyframeTime, setKeyframeTime] = useState(frame.getTime());
-    // const keyframeRef = useRef<HTMLDivElement>();
-    //
-    // let isDown = false;
-    // let isGrabbing = false;
-    // let startedGrabbingPosition = new v2(0,0);
-    // let frameStartingTime = 0;
-    //
-    // function handleMouseMove(e: MouseEvent) {
-    //     if(editorService.isExporting()) return;
-    //     if(!keyframeRef.current) return;
-    //     if(e.target && e instanceof MouseEvent) {
-    //         const boundingRect = keyframeRef.current.getBoundingClientRect();
-    //         const center = new v2((boundingRect.left + boundingRect.right)/2, (boundingRect.top + boundingRect.bottom)/2);
-    //         const pos = new v2(e.clientX, e.clientY);
-    //         if(center.minus(pos).length() < 7) {
-    //             if (isDown && !isGrabbing) {
-    //                 isGrabbing = true;
-    //                 startedGrabbingPosition = pos;
-    //                 frameStartingTime = keyframeTime;
-    //             }
-    //         }
-    //
-    //         if (isGrabbing) {
-    //             const movedByPX = pos.minus(startedGrabbingPosition).x;
-    //             const movedBySec = 60 * movedByPX / (keyframeTableWidth - 75);
-    //             setKeyframeTime(frameStartingTime + movedBySec)
-    //         }
-    //     }
-    // }
-
-    // function handleDown() {
-    //     isDown=true;
-    // }
-    //
-    // function handleUp() {
-    //     if(isGrabbing) {
-    //         frame.setTime(keyframeTime);
-    //         editorService.updateKeyframe(frame);
-    //     }
-    //     isDown=false;
-    //     isGrabbing=false;
-    // }
-    //
-    // useEffect(() => {
-    //     setKeyframeTime(frame.getTime())
-    //     window.addEventListener('mousemove', handleMouseMove)
-    //     window.addEventListener('mouseup', handleUp)
-    //     window.addEventListener('mouseleave', handleUp)
-    //     window.addEventListener('mousedown', handleDown)
-    //
-    //     return () => {
-    //         window.removeEventListener('mousemove', handleMouseMove)
-    //         window.removeEventListener('mouseup', handleUp)
-    //         window.removeEventListener('mouseleave', handleUp)
-    //         window.removeEventListener('mousedown', handleDown)
-    //     }
-    // }, []);
-
-
+function KeyframeElement({minTime, maxTime, frame, keyframeTableWidth}: KeyframeElementParams): JSX.Element {
     const title = `${Math.floor(frame.getTime() / 60).toString().padStart(2, '0')}`+
                 `:${(Math.floor(frame.getTime() % 60)).toString().padStart(2, '0')}`+
                 `:${Math.floor(((frame.getTime() % 1000) % 1) * 1000).toString().padStart(3, '0')}`
     return (
         <div
-            // ref={keyframeRef}
             title={title}
             key={frame.getId()}
-            style={{left: `${10 + (frame.getTime() / 60) * (keyframeTableWidth - 75)}px`, top: '7.5px'}}
+            style={{left: `${10 + ((frame.getTime()-minTime)/(maxTime-minTime)) * (keyframeTableWidth - 75)}px`, top: '7.5px'}}
             className={'hover:opacity-100 hover:cursor-pointer opacity-45 absolute h-[10px] aspect-square bg-white rotate-45'}
         ></div>
     )
@@ -92,10 +36,12 @@ function KeyframeElement({frame, keyframeTableWidth}: KeyframeElementParams): JS
 type KeyframeLineParams = {
     keyframeTableWidth: number
     keyframeableProperty: KeyframeableProperty,
+    minTime: number,
+    maxTime: number,
 }
 
 
-function KeyframeLine({keyframeTableWidth, keyframeableProperty}: KeyframeLineParams): JSX.Element {
+function KeyframeLine({minTime, maxTime, keyframeTableWidth, keyframeableProperty}: KeyframeLineParams): JSX.Element {
     const [frames, setFrames] = useState<Keyframe[]>([]);
     const {editorContextData} = useContext<EditorContextType>(EditorContext);
     const {width} = useWindowDimensions()
@@ -182,7 +128,7 @@ function KeyframeLine({keyframeTableWidth, keyframeableProperty}: KeyframeLinePa
                 <div style={{width: `${keyframeTableWidth}px`}}
                      className={`border-b-[1px] border-b-lightGray relative bg-blackGray h-[30px]`}>
                     {frames.map((frame: Keyframe) => (
-                        <KeyframeElement keyframeTableWidth={keyframeTableWidth} key={frame.getId()} frame={frame}/>
+                        <KeyframeElement minTime={minTime} maxTime={maxTime} keyframeTableWidth={keyframeTableWidth} key={frame.getId()} frame={frame}/>
                     ))}
                 </div>
             </div>
@@ -213,6 +159,7 @@ function KeyframeLine({keyframeTableWidth, keyframeableProperty}: KeyframeLinePa
                 <div className={'w-full select-none'}>
                     {keyframeableProperty.getChildren().map((child: KeyframeableProperty) => {
                         return <KeyframeLine
+                            minTime={minTime} maxTime={maxTime}
                             key={child.getFullPropertyPath()}
                             keyframeTableWidth={keyframeTableWidth}
                             keyframeableProperty={child}
@@ -228,9 +175,11 @@ type TimeNeedleParameters = {
     minPosition: number,
     maxPosition: number,
     height: number,
+    minTime: number,
+    maxTime: number,
 }
 
-function TimeNeedle({ minPosition, maxPosition, height }: TimeNeedleParameters): JSX.Element {
+function TimeNeedle({ minTime, maxTime, minPosition, maxPosition, height }: TimeNeedleParameters): JSX.Element {
     const dotRef = useRef<HTMLDivElement>(null);
     const timestampRef = useRef<HTMLDivElement>(null);
     const {editorContextData, updateEditorContext} = useContext<EditorContextType>(EditorContext);
@@ -272,7 +221,7 @@ function TimeNeedle({ minPosition, maxPosition, height }: TimeNeedleParameters):
                     // console.log((xNorm/(maxPosition-minPosition)) * 60)
 
                     // snap to the nearest 1/30 of a sec
-                    const ts = (xNorm/(maxPosition-minPosition)) * 60;
+                    const ts = minTime + (xNorm/(maxPosition-minPosition)) * (maxTime-minTime);
                     updateEditorContext({
                         previewTimestamp: Math.round( ts * 30 ) / 30
                     })
@@ -323,14 +272,14 @@ function TimeNeedle({ minPosition, maxPosition, height }: TimeNeedleParameters):
             window.removeEventListener("mouseup", handleMoseUp);
             window.removeEventListener("mousedown", handleMoseMove);
         }
-    }, [minPosition, maxPosition]);
+    }, [minTime, maxTime, minPosition, maxPosition]);
 
     return (
         <div
             draggable={false}
             ref={dotRef}
             style={{
-                left: `${-6 + minPosition + (editorContextData.previewTimestamp/60)*(maxPosition-minPosition)}px`,
+                left: `${-6 + minPosition + ((editorContextData.previewTimestamp-minTime)/(maxTime-minTime))*(maxPosition-minPosition)}px`,
                 top: '-2.5px',
             }}
             className={'absolute z-50 w-[13px] h-[25px] rounded-full bg-yellow-200 shadow-2xl'}
@@ -354,14 +303,144 @@ function TimeNeedle({ minPosition, maxPosition, height }: TimeNeedleParameters):
     )
 }
 
-export default function Timeline({keyframeTableWidth, height}: {
-    keyframeTableWidth: number
-} & ComponentWithDimensions): JSX.Element {
-    const {width} = useWindowDimensions()
-    const {editorContextData} = useContext<EditorContextType>(EditorContext);
-    const [keyframeProperties, setKeyframeProperties] = useState<KeyframeableProperty[]>([]);
+function TimelineResizeBar({ width, setMinTime, setMaxTime }: {
+    width: number,
+    setMinTime: Dispatch<SetStateAction<number>>,
+    setMaxTime: Dispatch<SetStateAction<number>>,
+}): JSX.Element {
+    const wholebarRef = useRef<HTMLDivElement>();
+    const leftBarRef = useRef<HTMLDivElement>();
+    const middleBarRef = useRef<HTMLDivElement>();
+    const rightBarRef = useRef<HTMLDivElement>();
+
+    const [leftBarPosition, setLeftBarPosition] = useState(0);
+    const [rightBarPosition, setRightBarPosition] = useState(60);
+    const linesCount = 40;
+
+    let mouseHoverLeft = false;
+    let mouseHoverMiddle = false;
+    let mouseHoverRight = false;
+
+    let mouseDown=false;
+
+    let grabbingLeft = false;
+    let grabbingMidBeginningPosition: v2 = new v2(0,0);
+    let grabbingMiddle = false;
+    let grabbingRight = false;
+
+    function handleMouseMove(e: MouseEvent){
+        if(!wholebarRef.current) return;
+        if(!leftBarRef.current) return;
+        if(!rightBarRef.current) return;
+        const wholeBarRect = wholebarRef.current.getBoundingClientRect()
+
+        const leftBoundingBox = leftBarRef.current.getBoundingClientRect();
+        const rightBoundingBox = rightBarRef.current.getBoundingClientRect();
+
+
+        const position = new v2(e.clientX, e.clientY);
+        if(leftBarRef.current) {
+            mouseHoverLeft = Math.abs(position.x - leftBoundingBox.x) < 5
+                && Math.abs(position.y - leftBoundingBox.y) < leftBoundingBox.height/2;
+
+            if(mouseDown && mouseHoverLeft && !grabbingRight && !grabbingMiddle) grabbingLeft = true;
+            if(grabbingLeft) {
+                const normalizedX = clamp(wholeBarRect.left, wholeBarRect.left + wholeBarRect.width, position.x) - wholeBarRect.left;
+                const v = clamp(0, (rightBoundingBox.left-wholeBarRect.left)/(wholeBarRect.width) * 60 - 5, normalizedX/wholeBarRect.width * 60)
+                setLeftBarPosition(v)
+                setMinTime(v);
+            }
+        }
+
+        if(rightBarRef.current) {
+            mouseHoverRight = Math.abs(position.x - rightBoundingBox.x) < 5
+                && Math.abs(position.y - rightBoundingBox.y) < rightBoundingBox.height/2;
+
+            if(mouseDown && mouseHoverRight && !grabbingRight && !grabbingMiddle) grabbingRight = true;
+            if(grabbingRight) {
+                const normalizedX = clamp(wholeBarRect.left, wholeBarRect.left + wholeBarRect.width, position.x) - wholeBarRect.left;
+                const v = clamp((leftBoundingBox.left-wholeBarRect.left)/(wholeBarRect.width) * 60 + 5, 60, normalizedX/wholeBarRect.width * 60)
+                setRightBarPosition(v)
+                setMaxTime(v);
+            }
+        }
+    }
+
+    function handleMouseDown() {
+        mouseDown=true;
+    }
+
+    function handleMouseUp() {
+        mouseDown=false;
+        grabbingRight=false;
+        grabbingLeft=false;
+        grabbingMiddle=false;
+    }
 
     useEffect(() => {
+        window.addEventListener('mouseup', handleMouseUp)
+        window.addEventListener('mouseleave', handleMouseUp)
+        window.addEventListener('mousedown', handleMouseDown)
+        window.addEventListener('mousemove', handleMouseMove)
+
+        return () => {
+            window.removeEventListener('mouseup', handleMouseUp)
+            window.removeEventListener('mouseleave', handleMouseUp)
+            window.removeEventListener('mousedown', handleMouseDown)
+            window.removeEventListener('mousemove', handleMouseMove)
+        }
+    }, []);
+
+    return (
+        <div ref={wholebarRef} style={{width: `${width}px`}} className={'select-none relative h-2/3 bg-blackGray'}>
+            <div className={'absolute h-full w-full'}>
+                {[...new Array(linesCount)].map((_, i) => (
+                    <div
+                        key={i}
+                        style={{
+                            bottom: '0px',
+                            left: `${width * i/linesCount}px`,
+                            height: `${i % 4 == 0 ? '50' : '25'}%`
+                        }}
+                        className={'absolute w-[1px] bg-white'}
+                    ></div>
+                ))}
+            </div>
+            <div
+                ref={leftBarRef}
+                className={'absolute bg-red-600 w-[2px] h-full'}
+                style={{left: `${width * leftBarPosition / 60}px`}}
+            ></div>
+            <div
+                ref={middleBarRef}
+                className={'absolute bg-lightGray opacity-45 w-[2px] h-full'}
+                style={{
+                    width: `${width * (rightBarPosition - leftBarPosition) / 60}px`,
+                    left: `${width * leftBarPosition / 60}px`
+                }}
+            ></div>
+            <div
+                ref={rightBarRef}
+                className={'absolute bg-red-600 w-[2px] h-full'}
+                style={{left: `${width * rightBarPosition / 60}px`}}
+            ></div>
+        </div>
+    )
+}
+
+export default function Timeline({keyframeTableWidth, height}: {
+    keyframeTableWidth: number,
+    minTime?: number,
+    maxTime?: number,
+} & ComponentWithDimensions): JSX.Element {
+    const {width} = useWindowDimensions();
+    const {updateEditorContext, editorContextData} = useContext<EditorContextType>(EditorContext);
+    const [keyframeProperties, setKeyframeProperties] = useState<KeyframeableProperty[]>([]);
+    const [minTime, setMinTime] = useState(0)
+    const [maxTime, setMaxTime] = useState(60)
+
+    useEffect(() => {
+
         const selectedObject = editorService.getSelectedObject();
         if(selectedObject) {
             setKeyframeProperties(
@@ -372,29 +451,38 @@ export default function Timeline({keyframeTableWidth, height}: {
         }
     }, [editorContextData]);
 
+    useEffect(() => {
+        updateEditorContext({
+            previewTimestamp: clamp(minTime, maxTime, editorContextData.previewTimestamp)
+        })
+    }, [minTime, maxTime]);
+
     return (
         <div style={{height: `${height-25}px`, marginTop: '25px'}} className={`relative w-full bg-darkGray flex flex-col`}>
-            <TimeNeedle minPosition={width-keyframeTableWidth + 15} maxPosition={width-60} height={height-25}/>
+            <TimeNeedle minTime={minTime} maxTime={maxTime} minPosition={width-keyframeTableWidth + 15} maxPosition={width-60} height={height-25}/>
             <div className={'flex h-[40px] z-10 flex-row shadow-lg'}>
-                <div style={{width: `${width - keyframeTableWidth}px`, height: '100%'}}></div>
+                <div style={{width: `${width - keyframeTableWidth}px`, height: '100%'}} className={'px-1 flex justify-center items-center'}>
+                    <TimelineResizeBar setMinTime={setMinTime} setMaxTime={setMaxTime} width={0.9*(width - keyframeTableWidth)}/>
+                </div>
                 <div style={{width: `${keyframeTableWidth}px`, height: '100%'}} className={'relative border-1'}>
-                    {[...(new Array(120))].map((_, i) =>
+                    {[...(new Array(Math.round(Math.max(1, (maxTime - minTime) * 2))))].map((_, i) =>
                         <div
                             key={i}
                             style={{
                                 bottom: `0px`,
-                                left: `${Math.floor(15 + (i/119) * (keyframeTableWidth-75)) - 1}px`,
-                                height: `${i%2==0?'55%':'25%'}`
+                                left: `${Math.floor(15 + (i / ((maxTime - minTime) * 2 - 1)) * (keyframeTableWidth - 75)) - 1}px`,
+                                height: `${i % 2 == 0 ? '55%' : '25%'}`
                             }}
                             className={'absolute w-[1px] bg-white'}
                         ></div>
                     )}
                 </div>
             </div>
-            <div style={{ height: `${height-40}px`}} className={'flex flex-col overflow-y-scroll scroll-m-72'}>
+            <div style={{height: `${height - 40}px`}} className={'flex flex-col overflow-y-scroll scroll-m-72'}>
                 {
                     keyframeProperties.map((p: KeyframeableProperty) =>
-                        <KeyframeLine key={p.getFullPropertyPath()} keyframeableProperty={p}
+                        <KeyframeLine minTime={minTime} maxTime={maxTime}
+                                      key={p.getFullPropertyPath()} keyframeableProperty={p}
                                       keyframeTableWidth={keyframeTableWidth}/>
                     )
                 }

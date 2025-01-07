@@ -200,6 +200,28 @@ export default class EditorService
                 angle: 2 * Math.PI
             })
 
+            const controlPoints = selectedObject.getControlPointsCurrentTransformed();
+
+            primitivesToRender.push({
+                type: 'Shape',
+                points: controlPoints,
+                strokeThickness: 1,
+                strokeColor: new Color(235, 180, 52, 0.4),
+                dashedLine: [5, 5]
+            })
+
+            for ( let i = 0; i<controlPoints.length; i++ ) {
+                primitivesToRender.push({
+                    type: "Arc",
+                    center: controlPoints[i],
+                    radius: 4,
+                    strokeThickness: 0,
+                    fillColor: new Color(250, 12, 52, 1),
+                    angle: 2 * Math.PI
+                });
+            }
+
+
             return {
                 primitivesToRender
             }
@@ -322,6 +344,13 @@ export default class EditorService
     insertKeyframe(objectId: number, path: string, value: number, time: number): void {
         if (!this.currentProject) throw new Error('No project loaded')
         this.waitForTimeToSendKeyframe(objectId, path, time, value, 200);
+    }
+
+    moveControlPointTo(objectId: number, controlPointIndex: number, position: v2) {
+        if (!this.currentProject) throw new Error('No project loaded')
+        const target = this.currentProject.getObjectById(objectId);
+        if(!target) throw new Error(`Object with id ${objectId} does not exit`)
+        target.updateControlPoint(controlPointIndex, position);
     }
 
     moveObjectTo(objectId: number, position: v2): void {

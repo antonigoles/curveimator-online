@@ -26,6 +26,9 @@ export default function WorkingWindow({width, height}: ComponentWithDimensions):
     let beginGrabPosition: v2|null = null;
     let beginGrabObjectPosition: v2|null = null;
     let beginGrabObjectRotation = 0;
+    let startingScale = 1;
+
+    let grabbedControlPointIndex: number|null = null;
 
     function handleMouseDown() {
         isMouseDown = true;
@@ -37,6 +40,7 @@ export default function WorkingWindow({width, height}: ComponentWithDimensions):
         beginGrabPosition = null;
         beginGrabObjectPosition = null;
         beginGrabObjectRotation = 0;
+        grabbedControlPointIndex = null;
         const selected = editorService.getSelectedObject();
         if(!selected) return;
         // selected.setForceLocalPosition(false);
@@ -86,14 +90,48 @@ export default function WorkingWindow({width, height}: ComponentWithDimensions):
         }
 
         if (editorContextData.currentTool === EditorTools.Scale) {
-            if (!hasGrabbed && selected.positionInsideObjectBoundarySquare(position)) {
+            if (!hasGrabbed) {
                 beginGrabPosition = position;
                 beginGrabObjectPosition = selected.getPosition();
                 hasGrabbed = true;
+                startingScale = selected.getScale();
             } else if (hasGrabbed && beginGrabPosition && beginGrabObjectPosition) {
-                const scaleBy = beginGrabObjectPosition.minus(position).length()
-                editorService.scaleObjectTo(selected.getId(), selected.getScale() * scaleBy);
-                // editorService.insertKeyframe(selected.getId(), 's', nextPosition.x, editorContextData.previewTimestamp);
+                const baseLength = beginGrabObjectPosition.minus(beginGrabPosition).length()
+                const scaledLength = beginGrabObjectPosition.minus(position).length()
+                editorService.scaleObjectTo(selected.getId(), startingScale * scaledLength/baseLength);
+                editorService.insertKeyframe(selected.getId(), 's', startingScale * scaledLength/baseLength, editorContextData.previewTimestamp);
+                return;
+            }
+        }
+
+        if (editorContextData.currentTool === EditorTools.ControlPointEditor) {
+            if (grabbedControlPointIndex === null) {
+                const cp = selected.getControlPointsCurrentTransformed();
+                for ( let i = 0; i<cp.length; i++ ) {
+                    if (cp[i].minus(position).length() < 5) {
+                        grabbedControlPointIndex = i;
+                        break;
+                    }
+                }
+            } else {
+                let p = position.minus(selected.getPosition());
+                const center = selected.getMassCenter();
+                p = v2.rotateBy( p.minus(center), -selected.getRotation() )
+                    .scale(1/selected.getScale())
+                    .plus(center)
+                editorService.moveControlPointTo(selected.getId(), grabbedControlPointIndex, p);
+                editorService.insertKeyframe(
+                    selected.getId(),
+                    `cp.${grabbedControlPointIndex}.x`,
+                    p.x,
+                    editorContextData.previewTimestamp
+                );
+                editorService.insertKeyframe(
+                    selected.getId(),
+                    `cp.${grabbedControlPointIndex}.y`,
+                    p.y,
+                    editorContextData.previewTimestamp
+                );
                 return;
             }
         }
