@@ -12,6 +12,7 @@ import {ObjectInTime, Primitive} from "../../Render/ObjectInTime.ts";
 import Color from "../../Math/color.ts";
 import Shape from "../../Render/Shape.ts";
 import Keyframe from "../Entities/Keyframe.ts";
+
 import {editorService} from "../../DIContainer.tsx";
 
 export default class EditorService
@@ -32,8 +33,9 @@ export default class EditorService
     private isAutoPlaying: boolean = false;
     private exporting: boolean = false;
     private autoPlaybackProgress: number = 0;
-    private playbackRate: number = 1;
     private playbackUpdateInterval: NodeJS.Timeout|null = null;
+
+    private temporaryPointTarget: ProjectObjectTypes|null = null;
 
     constructor(
         projectRepository: ProjectRepository,
@@ -57,25 +59,38 @@ export default class EditorService
         return this.isAutoPlaying;
     }
 
+    private lastFrameTimestamp: number = 0;
+    progressPlayback(timestamp: number): void {
+        if(this.lastFrameTimestamp === 0) {
+            this.lastFrameTimestamp = timestamp;
+            requestAnimationFrame(this.progressPlayback.bind(this))
+        }
+        if(!this.isAutoPlaying) return;
+        if(!this.currentProject) throw new Error('No project loaded')
+        this.autoPlaybackProgress += (timestamp - (this.lastFrameTimestamp??timestamp))/1000;
+        this.autoPlaybackProgress=Math.min(this.autoPlaybackProgress, 60)
+
+        for ( const obj of this.currentProject.getObjects() ) {
+            obj.updateObjectWithValuesAtTime(this.autoPlaybackProgress);
+        }
+
+        if(this.autoPlaybackProgress>=60.0) {
+            this.stopAutoPlayback();
+        } else {
+            this.callEditorUpdateCallbacks({
+                previewTimestamp: this.autoPlaybackProgress
+            })
+        }
+
+        this.lastFrameTimestamp = timestamp;
+        requestAnimationFrame(this.progressPlayback.bind(this))
+    }
+
     startAutoPlaybackFrom(timestamp: number): void {
         this.isAutoPlaying = true;
         this.autoPlaybackProgress = timestamp;
-        this.playbackUpdateInterval = setInterval(()=>{
-            if(!this.currentProject) throw new Error('No project loaded')
-            this.autoPlaybackProgress += this.playbackRate * (8/1000);
-            this.autoPlaybackProgress=Math.min(this.autoPlaybackProgress, 60)
-            for ( const obj of this.currentProject.getObjects() ) {
-                obj.updateObjectWithValuesAtTime(this.autoPlaybackProgress);
-            }
-            if(this.autoPlaybackProgress>=60.0) {
-                this.stopAutoPlayback();
-            } else {
-                this.callEditorUpdateCallbacks({
-                    previewTimestamp: this.autoPlaybackProgress
-                })
-            }
-
-        }, 8)
+        this.lastFrameTimestamp = 0;
+        requestAnimationFrame(this.progressPlayback.bind(this));
     }
 
     stopAutoPlayback(): void {
@@ -86,10 +101,6 @@ export default class EditorService
         this.callEditorUpdateCallbacks({
             isAutoplaying: false
         })
-    }
-
-    setPlaybackRate(rate: number): void {
-        this.playbackRate = rate;
     }
 
     setPlayback(timestamp: number): void {
@@ -122,7 +133,7 @@ export default class EditorService
             })
 
             mediaRecorder.start(to - from);
-            this.startAutoPlaybackFrom(0);
+            this.startAutoPlaybackFrom(from);
             mediaRecorder.ondataavailable = function(event) {
                 recordedChunks.push(event.data);
                 if (mediaRecorder.state === 'recording') {
@@ -131,7 +142,7 @@ export default class EditorService
             }
 
             mediaRecorder.onstop = function () {
-                const blob = new Blob(recordedChunks, {type: "video/webm" });
+                const blob = new Blob(recordedChunks, {type: "video/mp4;codecs:h.265" });
                 const url = URL.createObjectURL(blob);
                 stopExporting();
                 resolve(url);
@@ -288,7 +299,6 @@ export default class EditorService
                 const keyframe = Keyframe.fromKeyframeResponse(response.result.newState);
                 const targetObject = this.currentProject.getObjectById(keyframe.getProjectObjectId());
                 if(!targetObject) throw new Error("What");
-                console.log(targetObject)
                 switch (response.result.action) {
                     case "create":
                         targetObject.insertKeyframe(keyframe);
@@ -437,9 +447,9 @@ export default class EditorService
         return this.currentProject.getObjectById(this.selectedObjectId);
     }
 
-    handleAddControlPoint(object: ProjectObjectTypes, position: v2): void {
+    handleAddControlPoint(object: ProjectObjectTypes, position: v2, type: number = 0): void {
         if(object.getType() === 'bezier') {
-            (object as Bezier).addControlPoint(position);
+            (object as Bezier).addControlPoint(position, type);
             this.updateBezier(object as Bezier); // this should be fired to everyone
         }
     }
@@ -457,7 +467,7 @@ export default class EditorService
                 type: 'bezier',
                 id: bezier.getId(),
                 name: bezier.getName(),
-                controlPoints: bezier.getControlPoints().map( e => e.values ),
+                controlPoints: bezier.getControlPointsFullPayload(),
                 position: bezier.getPosition().values,
                 rotation: bezier.getRotation(),
                 scale: bezier.getScale(),
@@ -530,7 +540,7 @@ export default class EditorService
             type: "create",
             data: {
                 type: 'bezier',
-                controlPoints: [startingPosition.values],
+                controlPoints: [[...startingPosition.values, 0]],
                 position: [0,0],
                 rotation: 0,
                 scale: 1,
@@ -557,5 +567,15 @@ export default class EditorService
         for ( const cb of this.onEditorUpdateCallbacks ) {
             cb(editorContextData);
         }
+    }
+
+    handleAddTemporaryPoint(object: ProjectObjectTypes, position: v2, type: number): void {
+        if (this.temporaryPointTarget) this.temporaryPointTarget.removeTemporaryPoint()
+        this.temporaryPointTarget = object;
+        object.setTemporaryPoint(position, type);
+    }
+
+    handleRemoveTemporaryPoint(): void {
+        if (this.temporaryPointTarget) this.temporaryPointTarget.removeTemporaryPoint()
     }
 }

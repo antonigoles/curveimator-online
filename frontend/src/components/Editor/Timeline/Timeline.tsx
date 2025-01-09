@@ -1,15 +1,13 @@
 import ComponentWithDimensions from "../../ParameterTypes/ComponentWithDimensions.ts";
-import {Dispatch, SetStateAction, useCallback, useContext, useEffect, useRef, useState} from "react";
+import {Dispatch, SetStateAction, useContext, useEffect, useRef, useState} from "react";
 import {EditorContext, EditorContextType} from "../../../contexts/EditorContext.tsx";
 import KeyframeableProperty from "../../../core/Editor/Entities/KeyframeableProperty.ts";
 import useWindowDimensions from "../../useWindowDimensions.tsx";
-import {Edit, ExpandMore} from "@mui/icons-material";
+import {ExpandMore} from "@mui/icons-material";
 import Keyframe from "../../../core/Editor/Entities/Keyframe.ts";
 import {editorService} from "../../../core/DIContainer.tsx";
-import TextInput from "../../input/TextInput.tsx";
 import v2 from "../../../core/Math/v2.ts";
 import {clamp} from "../../../core/Math/utils.ts";
-import {normalizePath} from "vite";
 
 type KeyframeElementParams = {
     frame: Keyframe,
@@ -318,13 +316,11 @@ function TimelineResizeBar({ width, setMinTime, setMaxTime }: {
     const linesCount = 40;
 
     let mouseHoverLeft = false;
-    let mouseHoverMiddle = false;
     let mouseHoverRight = false;
 
     let mouseDown=false;
 
     let grabbingLeft = false;
-    let grabbingMidBeginningPosition: v2 = new v2(0,0);
     let grabbingMiddle = false;
     let grabbingRight = false;
 
@@ -340,7 +336,7 @@ function TimelineResizeBar({ width, setMinTime, setMaxTime }: {
 
         const position = new v2(e.clientX, e.clientY);
         if(leftBarRef.current) {
-            mouseHoverLeft = Math.abs(position.x - leftBoundingBox.x) < 5
+            mouseHoverLeft = Math.abs(position.x - leftBoundingBox.x) < 15
                 && Math.abs(position.y - leftBoundingBox.y) < leftBoundingBox.height/2;
 
             if(mouseDown && mouseHoverLeft && !grabbingRight && !grabbingMiddle) grabbingLeft = true;
@@ -353,7 +349,7 @@ function TimelineResizeBar({ width, setMinTime, setMaxTime }: {
         }
 
         if(rightBarRef.current) {
-            mouseHoverRight = Math.abs(position.x - rightBoundingBox.x) < 5
+            mouseHoverRight = Math.abs(position.x - rightBoundingBox.x) < 15
                 && Math.abs(position.y - rightBoundingBox.y) < rightBoundingBox.height/2;
 
             if(mouseDown && mouseHoverRight && !grabbingRight && !grabbingMiddle) grabbingRight = true;
@@ -408,7 +404,7 @@ function TimelineResizeBar({ width, setMinTime, setMaxTime }: {
             </div>
             <div
                 ref={leftBarRef}
-                className={'absolute bg-red-600 w-[2px] h-full'}
+                className={'absolute bg-red-600 w-[4px] h-full'}
                 style={{left: `${width * leftBarPosition / 60}px`}}
             ></div>
             <div
@@ -416,12 +412,12 @@ function TimelineResizeBar({ width, setMinTime, setMaxTime }: {
                 className={'absolute bg-lightGray opacity-45 w-[2px] h-full'}
                 style={{
                     width: `${width * (rightBarPosition - leftBarPosition) / 60}px`,
-                    left: `${width * leftBarPosition / 60}px`
+                    left: `${4 + width * leftBarPosition / 60}px`
                 }}
             ></div>
             <div
                 ref={rightBarRef}
-                className={'absolute bg-red-600 w-[2px] h-full'}
+                className={'absolute bg-red-600 w-[4px] h-full'}
                 style={{left: `${width * rightBarPosition / 60}px`}}
             ></div>
         </div>

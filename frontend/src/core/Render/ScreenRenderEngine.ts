@@ -5,8 +5,6 @@ import Shape from "./Shape.ts";
 import {Primitive} from "./ObjectInTime.ts";
 import {clamp} from "../Math/utils.ts";
 import v2 from "../Math/v2.ts";
-import ProjectObject from "../Editor/Entities/ProjectObject.ts";
-import {Project} from "../Editor/Entities/Project.ts";
 
 export enum EngineState {
     WAITING_FOR_INJECT = 0,
@@ -93,10 +91,14 @@ export class ScreenRenderEngine {
             if(object.type === 'Shape') {
                 const shape = object as Shape;
                 this.ctx.beginPath();
+                this.ctx.lineCap = 'round';
+                this.ctx.lineJoin = 'round'
                 this.ctx.moveTo(shape.points[0].x, shape.points[0].y);
                 let limit = shape.points.length;
                 let distanceLeft=0;
+                const epsilon = 1 / 32;
                 if (shape.strokeProgress !== undefined) {
+                    if(shape.strokeProgress - epsilon <= 0) continue;
                     let totalDistance = 0;
                     for ( let i = 1; i<shape.points.length; i++ ) {
                         totalDistance += shape.points[i].minus(shape.points[i-1]).length();
@@ -155,6 +157,16 @@ export class ScreenRenderEngine {
                 this.ctx.closePath();
             }
         }
+    }
+
+    public async canvasToImageBlob(): Promise<Blob> {
+        return new Promise((resolve) => {
+            if(!this.canvas) throw new Error('Missing canvas error');
+            this.canvas.toBlob((blob) => {
+                if(!blob) throw new Error('Error while exporting canvas to blob')
+                resolve(blob)
+            }, 'image/png');
+        })
     }
 
     private renderLoop(): number {

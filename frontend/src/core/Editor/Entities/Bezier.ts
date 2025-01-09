@@ -8,9 +8,12 @@ import KeyframeableProperty from "./KeyframeableProperty.ts";
 
 export default class Bezier extends ProjectObject {
     protected controlPoints: v2[];
+    protected controlPointType: number[];
     protected strokeProgress: number;
     protected strokeThickness: number;
     protected strokeColor: Color;
+
+    protected temporaryControlPoint: { position: v2, type: number }|null = null;
 
     constructor(
         id: number,
@@ -21,12 +24,14 @@ export default class Bezier extends ProjectObject {
         scale: number,
         keyframes: Keyframe[],
         controlPoints: v2[],
+        controlPointType: number[],
         strokeProgress: number,
         strokeThickness: number,
         strokeColor: Color
     ) {
         super(id, name, type, position, rotation, scale, keyframes);
         this.controlPoints = controlPoints;
+        this.controlPointType = controlPointType;
         this.strokeProgress = strokeProgress;
         this.strokeColor = strokeColor;
         this.strokeThickness = strokeThickness;
@@ -128,6 +133,7 @@ export default class Bezier extends ProjectObject {
         }
 
         const points: v2[] = response.serializedData.controlPoints.map(point => new v2(point[0], point[1]));
+        const controlPointType: number[] = response.serializedData.controlPoints.map(point => point[2] ?? 0);
         const cArr = response.serializedData.color;
         const color: Color = new Color(cArr[0], cArr[1], cArr[2], cArr[3]);
         const strokeProgress: number = Number(response.serializedData.strokeProgress);
@@ -143,31 +149,57 @@ export default class Bezier extends ProjectObject {
             response.scale,
             response.keyframes.map( response => Keyframe.fromKeyframeResponse(response) ),
             points,
+            controlPointType,
             strokeProgress,
             strokeThickness,
             color
         );
     }
 
-    addControlPoint(point: v2): void {
+    addControlPoint(point: v2, type: number = 0): void {
         // hacky way of getting what i want
         let p = point.minus(this.getPosition());
         const center = this.getMassCenter();
         p = v2.rotateBy( p.minus(center), -this.getRotation() ).plus(center)
         this.controlPoints.push(p);
+        this.controlPointType.push(type);
     }
 
     baseCurve(precision: number = 120): v2[] {
         if (this.controlPoints.length <= 0) return [];
-        const result: v2[] = [];
-        for ( let t = 0; t <= 1; t+= 1/precision ) {
-            let pt = this.controlPoints[this.controlPoints.length-1];
-            for ( let i = this.controlPoints.length-1; i>=0; i-- ) {
-                pt = pt.scale((1 - t)).plus(this.controlPoints[i].scale(t));
+        const components: v2[][] = [[]];
+        for ( let i = 0; i<this.controlPoints.length; i++ ) {
+            if(this.controlPointType[i] === 1) {
+                components.push([this.controlPoints[i]]);
+            } else {
+                components[components.length - 1].push(this.controlPoints[i]);
             }
-            result.push(pt);
         }
-        return result.reverse();
+        if (this.temporaryControlPoint) {
+            if (this.temporaryControlPoint.type === 1) {
+                components.push([this.temporaryControlPoint.position])
+
+            } else {
+                components[components.length - 1].push(this.temporaryControlPoint.position)
+            }
+        }
+        if (components[components.length - 1].length === 0) components.pop()
+        // if(components.length > 1) console.log(components)
+
+        const result: v2[] = [];
+        for ( const comp of components ) {
+            let temp = [];
+            for ( let t = 0; t <= 1; t += 1/precision ) {
+                let pt = comp[comp.length-1];
+                for ( let i = comp.length-1; i>=0; i-- ) {
+                    pt = pt.scale((1 - t)).plus(comp[i].scale(t));
+                }
+                temp.push(pt);
+            }
+            temp = temp.reverse();
+            result.push(...temp);
+        }
+        return result;
     }
 
     curvePostTransform(
@@ -191,6 +223,10 @@ export default class Bezier extends ProjectObject {
 
     getControlPoints(): v2[] {
         return this.controlPoints;
+    }
+
+    getControlPointTypes(): number[] {
+        return this.controlPointType;
     }
 
     getControlPointsCurrentTransformed(): v2[] {
@@ -365,9 +401,10 @@ export default class Bezier extends ProjectObject {
         )
     };
 
-    updateControlPoint(index: number, position: v2): void {
+    updateControlPoint(index: number, position: v2, type?: number): void {
         if (!this.controlPoints[index]) throw new Error("Out of index")
         this.controlPoints[index] = position;
+        this.controlPointType[index] = type === undefined ? this.controlPointType[index] : type;
     }
 
     updateKeyframe(keyframe: Keyframe): void {
@@ -384,7 +421,6 @@ export default class Bezier extends ProjectObject {
 
     insertKeyframe(keyframe: Keyframe) {
         // this check should also be done on the server
-        console.log(keyframe)
         if (keyframe.getPropertyPath() in this.keyframeMap) {
             // 1. check if we already have a keyframe at this timestamp
             const keyframes = this.keyframeMap[keyframe.getPropertyPath()];
@@ -407,4 +443,21 @@ export default class Bezier extends ProjectObject {
         this.rebuildKeyframes();
     }
 
+    getControlPointsFullPayload(): number[][] {
+        const result = [];
+        for ( let i = 0; i<this.controlPoints.length; i++ ) {
+            result.push([...(this.controlPoints[i].values), this.controlPointType[i]]);
+        }
+        return result;
+    }
+
+    setTemporaryPoint(position: v2, type: number): void {
+        this.temporaryControlPoint = {
+            position, type
+        }
+    }
+
+    removeTemporaryPoint(): void {
+        this.temporaryControlPoint = null;
+    }
 }

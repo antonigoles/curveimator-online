@@ -76,9 +76,10 @@ export function validateCreateBezier(data: any): ValidatorResult
     for ( let i = 0; i<data.data.controlPoints.length; i++ ) {
         const controlPoint = data.data.controlPoints[i]
         if (!(controlPoint instanceof Array)) return incorrectType('data.data.controlPoints');
-        if (controlPoint.length !== 2) return wrongSize(`data.data.controlPoints[${i}]`);
+        if (controlPoint.length !== 3) return wrongSize(`data.data.controlPoints[${i}]`);
         if (isNaN(controlPoint[0]))  return incorrectType(`data.data.controlPoints[${i}][0]`);
         if (isNaN(controlPoint[1]))  return incorrectType(`data.data.controlPoints[${i}][1]`);
+        if (isNaN(controlPoint[2]))  return incorrectType(`data.data.controlPoints[${i}][2]`);
     }
     return validatorResult(true);
 }
@@ -181,9 +182,10 @@ export function validateUpdateBezier(data: any): ValidatorResult
         for ( let i = 0; i<data.data.controlPoints.length; i++ ) {
             const controlPoint = data.data.controlPoints[i]
             if (!(controlPoint instanceof Array)) return incorrectType('data.data.controlPoints');
-            if (controlPoint.length !== 2) return wrongSize(`data.data.controlPoints[${i}]`);
+            if (controlPoint.length !== 3) return wrongSize(`data.data.controlPoints[${i}]`);
             if (isNaN(controlPoint[0]))  return incorrectType(`data.data.controlPoints[${i}][0]`);
             if (isNaN(controlPoint[1]))  return incorrectType(`data.data.controlPoints[${i}][1]`);
+            if (isNaN(controlPoint[2]))  return incorrectType(`data.data.controlPoints[${i}][2]`);
         }
     }
     return validatorResult(true);

@@ -1,5 +1,5 @@
 import ComponentWithDimensions from "../../ParameterTypes/ComponentWithDimensions.ts";
-import {useContext, useState} from "react";
+import {useContext, useEffect, useState} from "react";
 import {EditorContext, EditorContextType, EditorTools} from "../../../contexts/EditorContext.tsx";
 import {Draw, OpenWith, PanToolAlt, PhotoSizeSelectSmall, ThreeSixty} from "@mui/icons-material";
 import {editorService} from "../../../core/DIContainer.tsx";
@@ -121,28 +121,57 @@ function ToolList(): JSX.Element {
         {
             tool: EditorTools.Select,
             icon: PanToolAlt,
+            hint: "Zaznaczanie (S)",
+            key: "S",
         },
         {
             tool: EditorTools.Transform,
             icon: OpenWith,
+            hint: "Przesuwanie (T)",
+            key: "T",
         },
         {
             tool: EditorTools.Rotate,
             icon: ThreeSixty,
+            hint: "Obracanie (R)",
+            key: "R",
         },
         {
             tool: EditorTools.Scale,
             icon: PhotoSizeSelectSmall,
+            hint: "Skalowanie (X)",
+            key: "X",
         },
         {
             tool: EditorTools.ControlPointEditor,
-            icon: LocationSearchingIcon
+            icon: LocationSearchingIcon,
+            hint: "Edycja punktów kontrolnych (C)",
+            key: "C",
         },
         {
             tool: EditorTools.Bezier,
             icon: Draw,
+            hint: "Rysowanie krzywych (B)",
+            key: "B",
         }
     ]
+
+    function onKeyPress(e: KeyboardEvent) {
+        if (e.target instanceof HTMLInputElement) return;
+        for ( const tool of tools ) {
+            if(tool.key.toLowerCase() === e.key.toLowerCase()) {
+                updateEditorContext({ currentTool: tool.tool })
+                break;
+            }
+        }
+    }
+
+    useEffect(() => {
+        window.addEventListener("keypress", onKeyPress);
+        return () => {
+            window.removeEventListener("keypress", onKeyPress);
+        }
+    }, []);
 
     return (
         <div className={'w-full p-2 flex flex-row justify-center border-b-2 border-lightGray flex-wrap '}>
@@ -150,6 +179,7 @@ function ToolList(): JSX.Element {
                 tool =>
                     (
                         <div
+                            title={tool.hint}
                             key={tool.tool}
                             onClick={() => {
                                 updateEditorContext({ currentTool: tool.tool })

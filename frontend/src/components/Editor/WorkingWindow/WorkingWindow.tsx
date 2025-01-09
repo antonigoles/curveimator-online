@@ -21,6 +21,8 @@ export default function WorkingWindow({width, height}: ComponentWithDimensions):
     const [loading, setLoading] = useState<boolean>(true);
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
+    let isShifting = false;
+
     let isMouseDown = false;
     let hasGrabbed = false
     let beginGrabPosition: v2|null = null;
@@ -29,6 +31,14 @@ export default function WorkingWindow({width, height}: ComponentWithDimensions):
     let startingScale = 1;
 
     let grabbedControlPointIndex: number|null = null;
+
+    function handleKeyboardDown(e: KeyboardEvent) {
+        isShifting = e.shiftKey;
+    }
+
+    function handleKeyboardUp(e: KeyboardEvent) {
+        isShifting = e.shiftKey;
+    }
 
     function handleMouseDown() {
         isMouseDown = true;
@@ -43,11 +53,9 @@ export default function WorkingWindow({width, height}: ComponentWithDimensions):
         grabbedControlPointIndex = null;
         const selected = editorService.getSelectedObject();
         if(!selected) return;
-        // selected.setForceLocalPosition(false);
     }
 
     function handleMouseMove(event: MouseEvent) {
-        if(!isMouseDown) return;
         if(!event.target) return;
         if(!(event.target instanceof HTMLElement)) return;
 
@@ -55,6 +63,15 @@ export default function WorkingWindow({width, height}: ComponentWithDimensions):
         const rect = event.target.getBoundingClientRect();
         const position = new v2((event.offsetX/rect.width)*1280, (event.offsetY/rect.height)*720);
         const selected = editorService.getSelectedObject();
+        if (editorContextData.currentTool === EditorTools.Bezier) {
+            if(selected) {
+                editorService.handleAddTemporaryPoint(selected, position, isShifting ? 1 : 0);
+            }
+        } else {
+            editorService.handleRemoveTemporaryPoint();
+        }
+
+        if(!isMouseDown) return;
         if(!selected) return;
 
         if (editorContextData.currentTool === EditorTools.Transform) {
@@ -135,14 +152,6 @@ export default function WorkingWindow({width, height}: ComponentWithDimensions):
                 return;
             }
         }
-
-        // if (editorContextData.currentTool === EditorTools.Select) {
-        //     if (!hasGrabbed && selected.positionInsideObjectBoundarySquare(position)) {
-        //         beginGrabPosition = position;
-        //         beginGrabObjectPosition = selected.getPosition();
-        //         hasGrabbed = true;
-        //     }
-        // }
     }
 
     function handleWindowClick(event: MouseEvent) {
@@ -174,7 +183,7 @@ export default function WorkingWindow({width, height}: ComponentWithDimensions):
             const selectedObject = editorService.getSelectedObject()
             if(selectedObject) {
                 // add to existing object
-                editorService.handleAddControlPoint(selectedObject, position);
+                editorService.handleAddControlPoint(selectedObject, position, isShifting ? 1 : 0);
             } else {
                 // create new object
                 editorService.createNewBezier(position);
@@ -199,6 +208,8 @@ export default function WorkingWindow({width, height}: ComponentWithDimensions):
             refCopy.addEventListener("mouseout", handleMouseUp)
             refCopy.addEventListener("mousedown", handleMouseDown)
             refCopy.addEventListener("mousemove", handleMouseMove)
+            window.addEventListener("keydown", handleKeyboardDown)
+            window.addEventListener("keyup", handleKeyboardUp)
         } else {
             setLoading(true);
         }
@@ -211,6 +222,8 @@ export default function WorkingWindow({width, height}: ComponentWithDimensions):
                 refCopy.removeEventListener("mouseout", handleMouseUp)
                 refCopy.removeEventListener("mousedown", handleMouseDown)
                 refCopy.removeEventListener("mousemove", handleMouseMove)
+                window.removeEventListener("keydown", handleKeyboardDown)
+                window.removeEventListener("keyup", handleKeyboardUp)
             }
         }
     }, [canvasRef, editorContextData, canvasHeight, canvasWidth]);
